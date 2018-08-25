@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Styles -->
+    <link rel="stylesheet" href="lib/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <!-- Libraries -->
+    <script src="lib/jquery/dist/jquery.min.js"></script>
+    <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+
+    <script src="lib/angular/angular.min.js"></script>
+    <script src="lib/angular-ui-router/release/angular-ui-router.min.js"></script>
+
+    <script src="lib/highcharts/highcharts.js"></script>
+    <script src="lib/highcharts/modules/exporting.js"></script>
+    <script src="lib/highcharts/modules/no-data-to-display.js"></script>
+    <script src="lib/highcharts-export-csv/highcharts-export-csv.js"></script>
+
+    <script src="lib/angular-sanitize/angular-sanitize.js"></script>
+    <script src="lib/ng-csv/build/ng-csv.js"></script>
+
+    <!-- Bootstrap with modal module only -->
+    <script src="lib/angular-ui-router/release/angular-ui-router.js"></script>
+    <script src="lib/bootstrap-ui/ui-bootstrap-custom-tpls-1.3.3.min.js"></script>
+
+    <script src="app/app.js"></script>
+
+    <script src="lib/underscore/underscore.js"></script>
+    <script src="lib/angular-underscore-module/angular-underscore-module.js"></script>
+
+    <!-- Directives -->
+    <script src="app/directives/loading/loading.js"></script>
+     <script src="app/directives/layout.js"></script>
+     
+    <!-- <script src="app/directives/directivas.js"></script>
+     
+       <script src="app/directives/mascaraInputFecha-fiducia.js"></script>-->
+    
+        <!-- Services -->
+    <script src="app/services/loginSvc.js"></script>
+    <script src="app/services/logoutSvc.js"></script>
+     <script src="app/services/usuarios/usuariosSvc.js"></script>
+     <script src="app/services/productosSvc.js"></script>
+          <script src="app/services/generalesSvc.js"></script>
+          <script src="app/services/facturasSvc.js"></script>
+
+    <!-- Controllers -->
+    <script src="app/controllers/errorsCtrl.js"></script>
+    <script src="app/controllers/loginCtrl.js"></script>
+    <script src="app/controllers/menuCtrl.js"></script>
+    <script src="app/controllers/usuariosCtrl.js"></script>
+    <script src="app/controllers/sucursalesCtrl.js"></script>
+     <script src="app/controllers/clientesCtrl.js"></script>
+     <script src="app/controllers/productosCtrl.js"></script>
+     <script src="app/controllers/facturasCtrl.js"></script>
+      <script src="app/controllers/revertirFacturasCtrl.js"></script>
+     <script src="app/controllers/reportesCtrl.js"></script>
+    
+
+    <title>urbaNatt</title>
+</head>
+
+<body ng-app="sbAdministrative">
+    <!-- The ui-view directive tells $state where to place your templates. -->
+    <div ui-view></div>
+    <loading></loading>
+</body>
+
+</html>

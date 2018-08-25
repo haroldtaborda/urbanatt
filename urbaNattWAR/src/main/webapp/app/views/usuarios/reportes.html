@@ -1,0 +1,106 @@
+<div class="container panel-body" ng-controller="reportesCtrl">
+
+	<div id="breadcrumb">
+		<span id="migaPan" class="labelMigaPan"><a href=""><img
+				height="0" width="0" /></a><span><a href="">UrbaNatt</a></span><span>
+				&gt; </span><span><a href="">Reportes</a></span><span> &gt; </span><span>Administración Reportes</span><a id="ctl00_DefaultBreadCrumb_SkipLink"></a></span>
+
+	</div>
+
+	<h1 class="main-title">Generación de reportes</h1>
+
+	<div class="form-group col-xs-12 col-md-12">
+		<!-- 	<div class="form-group col-xs-12 col-md-6">
+				<label for="">Fecha inicial</label>
+				<div class="input-group">
+					<input type="text" class="form-control" readonly="true"
+						show-button-bar="false" uib-datepicker-popup
+						ng-model="fechaInicial"
+						is-open="fechaIniOpen"
+						datepicker-options="optionsIni" />
+					<div class="input-group-btn">
+						<button type="button" class="btn btn-default"
+							ng-click="fechaIniShow()">
+							<i class="glyphicon glyphicon-calendar"></i>
+						</button>
+					</div>
+				</div>
+			</div>
+			
+			<div class="form-group col-xs-12 col-md-6">
+				<label for="">Fecha final</label>
+				<div class="input-group">
+					<input type="text" class="form-control" readonly="true"
+						show-button-bar="false" uib-datepicker-popup
+						ng-model="fechaFinal"
+						is-open="fechaFinOpen"
+						datepicker-options="optionsFin" />
+					<div class="input-group-btn">
+						<button type="button" class="btn btn-default"
+							ng-click="fechaFinShow()">
+							<i class="glyphicon glyphicon-calendar"></i>
+						</button>
+					</div>
+				</div>
+			</div>
+			 -->
+			 
+			 <div class="form-group col-xs-12 col-md-6">
+				<label>Tipo Reporte</label> <select class="form-control"
+					ng-model="tipoReporte" ng-change="seleccionarTipo()">
+					<option value="">Seleccione</option>
+					<option ng-repeat="e in reportes" value="{{e}}">{{e}}</option>
+				</select>
+			</div>
+			 <div ng-show="factura">
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Nombre reporte</label> <input type="text" class="form-control" id=""
+					placeholder="nombre" ng-model="nombreReporte" />
+
+			</div>
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Días factura</label> <input type="number" class="form-control" id=""
+					placeholder="# días a consultar" ng-model="diasFactura" />
+
+			</div>
+			
+				<div class="form-group col-xs-12 col-md-6">
+						<label>Cliente</label> <select class="form-control" required="required"
+							ng-model="idCliente">
+							<option ng-repeat="e in clientes" label="{{e.nombreCliente}}" value="{{e.numId}} ">{{e.nombreCliente}}</option>
+						</select>
+					</div>
+					
+			<div class="form-group col-xs-12 col-md-6">
+						<label>Producto</label> <select class="form-control" required="required"
+							ng-model="idProducto">
+							<option ng-repeat="e in productos" label="{{e.nombreProducto}}" value="{{e.idProducto}} ">{{e.nombreProducto}}</option>
+						</select>
+					</div>
+					
+			</div>
+			
+			<div ng-show="producto">
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Nombre reporte</label> <input type="text" class="form-control" id=""
+					placeholder="nombre" ng-model="nombreReporte" />
+
+			</div>
+								
+			<div class="form-group col-xs-12 col-md-6">
+						<label>Producto</label> <select class="form-control" required="required"
+							ng-model="idProducto">
+							<option ng-repeat="e in productos" label="{{e.nombreProducto}}" value="{{e.idProducto}} ">{{e.nombreProducto}}</option>
+						</select>
+					</div>
+					
+			</div>		
+					<div class="col-xs-12 col-sm-11">
+					<button ng-click="cancelar()" class="boton floatRight">Cancelar</button>
+				</div>
+				<div class="col-xs-12 col-sm-1"  ng-show="!mostrarEditar">
+					<button ng-click="generarReporte()" 
+						class="boton floatRight">Generar</button>
+				</div>
+
+</div>

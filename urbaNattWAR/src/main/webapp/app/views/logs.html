@@ -1,0 +1,31 @@
+<div class="container">
+    <h1 class="main-title">Administración de logs</h1>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered custom">
+            <thead>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Incidente</th>
+                <th>Reenviar</th>
+                <th>Eliminar</th>
+            </thead>
+            <tbody ng-repeat="retry in logs.retriesList" ng-init="sectionIndex = $index">
+                <tr>
+                    <td >{{retry.date | date : 'dd/MM/yyyy'}}</td>
+                    <td >{{retry.date | date : 'HH:mm'}}</td>
+                    <td style="text-align:left;" ><strong ng-show="retry.errorGeneral!==undefined && retry.errorGeneral!==''">Error general:</strong> {{retry.errorGeneral}}<br/><strong ng-show="retry.errorProcedimientos!==undefined && retry.errorProcedimientos!==''">Error procedimientos:</strong> {{retry.errorProcedimientos}}<br/><strong ng-show="retry.errorCorreo!==undefined && retry.errorCorreo!==''">Error correo:</strong> {{retry.errorCorreo}}<br/><strong ng-show="retry.errorFilenet!==undefined && retry.errorFilenet!==''">Error filenet:</strong> {{retry.errorFilenet}}<br/></td>
+                    <td>
+                        <a ng-click="logs.setRetry(retry.clinicalId)" style="cursor:pointer;">
+                            <i class="glyphicon glyphicon-refresh"></i>
+                        </a>
+                    </td>
+                    <td>
+                        <a ng-click="logs.deleteRetry(retry.clinicalId)" style="cursor:pointer;">
+                            <i class="glyphicon glyphicon-remove-circle"></i>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

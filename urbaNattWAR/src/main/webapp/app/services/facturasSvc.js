@@ -1,0 +1,155 @@
+//registers a service factory function
+app.factory('facturasSvc', function($http, $q, CONFIG, $window) {
+    "use strict";
+    return {
+    	crearFactura: function(usuario) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: usuario,
+                url: CONFIG.endpoint + "/facturas/crearFactura"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
+        abonarFactura: function(usuario) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: usuario,
+                url: CONFIG.endpoint + "/facturas/abonarFactura"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
+        generarReporte: function(usuario) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: usuario,
+                url: CONFIG.endpoint + "/facturas/generarReporte"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
+        eliminarFactura: function(usuario) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: usuario,
+                url: CONFIG.endpoint + "/facturas/eliminarFactura"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
+        revertirFactura: function(usuario) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: usuario,
+                url: CONFIG.endpoint + "/facturas/revertirFactura"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
+        consultasFacturas: function(usuario) {
+        	var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'GET',
+                url: CONFIG.endpoint + "/facturas/consultasFacturas/"+usuario.numeroFactura+"/"+usuario.estado+"/"+usuario.numeroId+"/"+usuario.dias
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        }
+    };
+});

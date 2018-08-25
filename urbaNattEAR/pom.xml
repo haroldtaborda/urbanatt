@@ -1,0 +1,61 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<parent>
+		<groupId>co.urbaNatt</groupId>
+		<artifactId>urbaNatt</artifactId>
+		<version>1.0</version>
+	</parent>
+	
+	<artifactId>urbaNattEAR</artifactId>
+	<packaging>ear</packaging>
+	<name>urbaNatt Ear module</name>
+	
+	<dependencies>
+	
+		
+		<dependency>
+			<groupId>co.urbaNatt</groupId>
+			<artifactId>urbaNattJAR</artifactId>
+			<version>1.0</version>
+			<type>ejb</type>
+		</dependency>
+		
+		<dependency>
+			<groupId>co.urbaNatt</groupId>
+			<artifactId>urbaNattWAR</artifactId>
+			<version>1.0</version>
+			<type>war</type>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-ear-plugin</artifactId>
+				<version>2.10.1</version>
+				<configuration>
+					<defaultLibBundleDir>lib/</defaultLibBundleDir>
+          			<skinnyWars>true</skinnyWars>
+					<modules>
+						<ejbModule>
+							<groupId>co.urbaNatt</groupId>
+							<artifactId>urbaNattJAR</artifactId>
+							<bundleFileName>urbaNatt.jar</bundleFileName>
+						</ejbModule>
+					
+						<webModule>
+							<groupId>co.urbaNatt</groupId>
+							<artifactId>urbaNattWAR</artifactId>
+							<uri>urbaNatt.war</uri>
+			                <bundleFileName>urbaNatt.war</bundleFileName>
+			                <contextRoot>/urbaNatt</contextRoot>
+						</webModule>
+					</modules>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

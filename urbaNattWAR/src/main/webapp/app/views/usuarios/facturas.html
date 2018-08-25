@@ -1,0 +1,195 @@
+<div class="container panel-body" ng-controller="facturasCtrl">
+
+	<div id="breadcrumb">
+		<span id="migaPan" class="labelMigaPan"><a href=""><img
+				height="0" width="0" /></a><span><a href="">UrbaNatt</a></span><span>
+				&gt; </span><span><a href="">Facturas</a></span><span> &gt; </span><span>Administración
+				facturas</span><a id="ctl00_DefaultBreadCrumb_SkipLink"></a></span>
+
+	</div>
+
+	<h1 class="main-title">Administración facturas de la apicación</h1>
+	<div ng-show="mostrarTabla">
+		<div class="form-group col-xs-12 col-md-12">
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Número factura</label> <input type="text"
+					class="form-control" id="" placeholder="# factura"
+					ng-model="numeroFactura" />
+
+			</div>
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Estado</label> <select class="form-control" ng-model="estado">
+					<option value="">Seleccione</option>
+					<option ng-repeat="e in estados" value="{{e}}">{{e}}</option>
+				</select>
+			</div>
+
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Identificación cliente</label> <input type="text"
+					class="form-control" id="" placeholder="# id" ng-model="numeroId" />
+
+			</div>
+			
+						<div class="form-group col-xs-12 col-md-6">
+				<label>Días facturado</label> <input type="number"
+					class="form-control" id="" placeholder="# días"
+					ng-model="dias" />
+
+			</div>
+			<div class="col-xs-12">
+				<button ng-click="buscarUsuarios()" class="boton floatRight">Buscar</button>
+			</div>
+		</div>
+	</div>
+	<div class="form-group">
+		<div class="accordion-inner" ng-show="mostrarTabla" style="overflow-y: auto; width:1000px;height: 600px;">
+			<table class="table table-striped table-bordered custom">
+				<thead>
+					<th>#</th>
+					<th>Número factura</th>
+					<th>Nombre cliente</th>
+					<th>Valor factura</th>
+					<th>Valor deuda</th>
+					<th>Valor pagado</th>
+					<th>Fecha factura</th>
+					<th>Sucursal</th>
+					<th>Días facturado</th>
+					<th>Tipo</th>
+					<th>Estado</th>
+					<td title="agregar factura"><a
+						ng-click="abrirAgregarUsuario()"><img
+							src="assets/img/icoAgregar.gif"></a></td>
+				</thead>
+				<tbody>
+					<tr class="accordion-group"
+						ng-repeat="u in facturasTabla track by $index">
+						<td>{{$index+1}}</td>
+						<td>{{u.numeroFactura}}</td>
+						<td>{{u.nombreCliente}}</td>
+						<td>{{u.valorFactura  | currency}}</td>
+						<td>{{u.valorDeuda | currency}}</td>
+						<td>{{u.valorPagado  | currency}}</td>
+						<td>{{u.fechaFactura | date}}</td>
+						<td>{{u.nombreSucursal}}</td>
+						<td>{{u.dias}}</td>
+						<td>{{u.tipo}}</td>
+						<td>{{u.estado}}</td>
+						<th width="12%">
+							<a ng-click="abonarFactura(u)" ng-show="u.tipo == 'CREDITO'"><img title="Abonar a factura"
+								src="assets/img/icoActivar.png"></a>
+								<a ng-click="revertirFactura(u)"><img title="Revertir factura"
+								src="assets/img/icoCerrarFormulario.png"></a></th>
+					</tr>
+				</tbody>
+			</table>
+			<center>
+				<label class="labelFormulario" ng-show="usuariosTabla.length == 0">No
+					Existen registros</label>
+			</center>
+		</div>
+
+	</div>
+	<div class=" col-xs-12 col-md-12" ng-show="!mostrarTabla">
+		<div class="form-group col-xs-12 col-md-12">
+			<div class="form-group col-xs-12 col-md-6">
+				<label>*Número factura</label> <input type="text"
+					required="required" class="form-control" id=""
+					placeholder="# factura" ng-model="factura.numeroFactura" />
+
+			</div>
+
+			<div class="form-group col-xs-12 col-md-6">
+				<label>*Cliente</label> <select class="form-control"
+					required="required" ng-model="factura.idCliente"
+					ng-selected="factura.idCliente==e.numId" ng-change="consultarFacturasPorCliente()">
+					<option ng-repeat="e in clientes" label="{{e.nombreCliente}}"
+						value="{{e.numId}} ">{{e.nombreCliente}}</option>
+				</select>
+			</div>
+
+		</div>
+		
+		<div class="form-group col-xs-12 col-md-12">
+			<div class="form-group col-xs-12 col-md-6">
+				<label>*Sucursal</label> <select class="form-control"
+					required="required" ng-model="factura.idSucursal"
+					ng-selected="factura.idSucursal==e.idSucursal" >
+					<option ng-repeat="e in sucursales" label="{{e.nombreSucursal}}"
+						value="{{e.idSucursal}} ">{{e.nombreSucursal}}</option>
+				</select>
+			</div>
+			
+
+		</div>
+
+		<div class="form-group col-xs-12 col-md-12">
+			<div class="form-group col-xs-12 col-md-6">
+				<label for="">*Fecha factura</label>
+				<div class="input-group">
+					<input type="text" class="form-control" readonly="true"
+						show-button-bar="false" uib-datepicker-popup
+						ng-model="factura.fechaFactura" is-open="fechaFinOpen"
+						datepicker-options="optionsFin" />
+					<div class="input-group-btn">
+						<button type="button" class="btn btn-default"
+							ng-click="fechaFinShow()">
+							<i class="glyphicon glyphicon-calendar"></i>
+						</button>
+					</div>
+				</div>
+			</div>
+			<div class="form-group col-xs-12 col-md-6">
+				<label>*Valor factura</label> <input type="text"
+					class="form-control" id=""  urbanatt-Currency
+					placeholder="valor de la factura"
+					ng-model="factura.valorFactura" />
+			</div>
+
+		</div>
+		<div class="form-group col-xs-12 col-md-6" style="overflow-y: auto; height: 200px">
+			<fieldset>
+				<legend> Productos</legend>
+				<span ng-repeat="pro in productos"> 
+				<div class="form-group col-xs-12 col-md-12">
+			<div class="form-group col-xs-12 col-md-5">
+				<input type="checkbox"
+					ng-click="seleccionarProducto(pro)" value="{{pro.nombreProducto}}" /> <label>
+						{{pro.nombreProducto}} </label> 
+						</div>
+						<div class="form-group col-xs-12 col-md-6">
+						<input style="width: 80px;" type="number" class="form-control"
+					id="" placeholder="cantidad" ng-model="pro.cantidad" />
+					</div></div>
+				</span>
+			</fieldset>
+		</div>
+
+<div class="form-group col-xs-12 col-md-6">
+				<label>Tipo</label> <select class="form-control"
+					ng-model="factura.tipo">
+					<option value="">Seleccione</option>
+					<option ng-repeat="e in tipos" value="{{e}}">{{e}}</option>
+				</select>
+			</div>
+			
+
+		<div class="form-group col-xs-12 col-md-6">
+				<label>Descripción</label> <br>
+				<textarea rows="4" cols="50" ng-model="factura.descripcion" />
+		</div>
+
+		<div class="col-xs-12 col-sm-11">
+			<button ng-click="cancelar()" class="boton floatRight">Cancelar</button>
+		</div>
+		<div class="col-xs-12 col-sm-1" ng-show="!mostrarEditar">
+			<button ng-click="agregarUsuario()" class="boton floatRight">Guardar</button>
+		</div>
+		<div class="col-xs-12 col-sm-1" ng-show="mostrarEditar">
+			<button ng-click="agregarUsuario()" class="boton floatRight">Editar</button>
+		</div>
+
+
+
+
+	</div>
+</div>

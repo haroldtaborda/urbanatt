@@ -1,0 +1,28 @@
+<div class="container-fluid body_login">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="text-middle">
+                <div>
+                    <img class="logo-login" src="assets/img/URBANATTLOGO1.png" alt="">
+                    <div class="login-form">
+                        <div class="input-login">
+                            <i class="icon sb-avatar_masculino"></i>
+                            <input type="text" name="userId" id="userId" placeholder="Usuario" ng-model="login.userId" />
+                        </div>
+                        <div class="input-login">
+                            <i class="icon sb-contrasena"></i>
+                            <input type="password" name="password" id="password" placeholder="Contraseña" ng-model="login.password" />
+                        </div>
+                    </div>
+                    <div class="col-xs-2 col-xs-offset-5">
+                      <button class="btn btn-yellow btn-block" ng-click="login.authenticate()">Ingresar</button>
+                    </div>
+                    <br/>
+                    <br/>
+                    <br/>
+                    <h6 class="col-xs-12" style="color: green;font-size: medium;">Versión : {{CONFIG.appVersion}} </h6>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

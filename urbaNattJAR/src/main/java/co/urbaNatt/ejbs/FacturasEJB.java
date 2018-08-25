@@ -1,0 +1,1247 @@
+/**
+ * ManagerSecurityEJB.java
+ */
+package co.urbaNatt.ejbs;
+
+import java.awt.Desktop;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.Stateless;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+
+import co.urbaNatt.DAO.ProductosDAO;
+import co.urbaNatt.DTO.DetalleFacturaDTO;
+import co.urbaNatt.DTO.FacturaDTO;
+import co.urbaNatt.DTO.InsertsBDInDTO;
+import co.urbaNatt.DTO.OperacionesBDInDTO;
+import co.urbaNatt.DTO.ProductoDTO;
+import co.urbaNatt.DTO.ReporteDTO;
+import co.urbaNatt.DTO.ResultSecurityDTO;
+import co.urbaNatt.constans.CamposTablaConstans;
+import co.urbaNatt.constans.EnumServiceTypeError;
+import co.urbaNatt.constans.EnumWebServicesErrors;
+import co.urbaNatt.constans.Error;
+import co.urbaNatt.constans.MensajesConstans;
+import co.urbaNatt.constans.SecuenciasConstans;
+import co.urbaNatt.constans.TablasConstans;
+import co.urbaNatt.enums.EstadoFacturasEnum;
+import co.urbaNatt.enums.EstadoPagosEnum;
+import co.urbaNatt.enums.EstadosOperaciones;
+import co.urbaNatt.exceptions.BusinessException;
+import co.urbaNatt.exceptions.TechnicalException;
+import co.urbaNatt.utils.ConnectionUtils;
+import co.urbaNatt.utils.BD.OperacionesBD;
+
+/**
+ * 
+ * @author Harold
+ *
+ */
+@Stateless
+public class FacturasEJB implements IFacturasEJBLocal {
+	/**
+	 * Instancia del log
+	 */
+	private static Logger log = Logger.getLogger(FacturasEJB.class.getCanonicalName());
+
+	OperacionesBD operacionesBD = new OperacionesBD();
+
+	/**
+	 * Constructor de la clase
+	 */
+	public FacturasEJB() {
+	}
+
+	public String crearFactura(FacturaDTO usuarioInDTO) throws TechnicalException, BusinessException {
+
+		InsertsBDInDTO insertsBDInDTO = new InsertsBDInDTO();
+		Connection conexion = null;
+		try {
+			String resultado = "";
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			List<Object> parametros = new ArrayList<Object>();
+			insertsBDInDTO.setConexion(conexion);
+			insertsBDInDTO.setTabla(TablasConstans.FACTURAS);
+			insertsBDInDTO.setCampos(CamposTablaConstans.CAMPOS_FACTURA);
+
+			parametros.add(SecuenciasConstans.NEXT_FACTURAS);
+			parametros.add(usuarioInDTO.getNumeroFactura());
+			parametros.add(usuarioInDTO.getIdCliente());
+			parametros.add(operacionesBD.fechaStringPorDate(new Date()));
+			parametros.add(operacionesBD.fechaStringPorDate(usuarioInDTO.getFechaFactura()));
+			// cuando se crea el valor deuda = a valro factura
+			if (usuarioInDTO.getTipo().equalsIgnoreCase("CONTADO")) {
+				parametros.add(BigDecimal.ZERO);
+				parametros.add(usuarioInDTO.getValorFactura());
+				parametros.add(EstadoFacturasEnum.PAGADA.getEstado());
+			} else {
+				parametros.add(usuarioInDTO.getValorFactura());
+				parametros.add(BigDecimal.ZERO);
+				parametros.add(usuarioInDTO.getEstado() == null || usuarioInDTO.getEstado().isEmpty()
+						? EstadoFacturasEnum.NUEVA.getEstado() : usuarioInDTO.getEstado());
+			}
+			parametros.add(usuarioInDTO.getValorFactura());
+			parametros.add(usuarioInDTO.getDescripcion());
+			parametros.add(usuarioInDTO.getTipo());
+			parametros.add(usuarioInDTO.getIdSucursal());
+			insertsBDInDTO.setParametros(parametros);
+			resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
+			Long idFactura = 0L;
+			for (ProductoDTO p : usuarioInDTO.getProductos()) {
+				// se crea un detalle factura por cada producto agregado
+				parametros = new ArrayList<Object>();
+				insertsBDInDTO.setConexion(conexion);
+				insertsBDInDTO.setTabla(TablasConstans.FACTURA_PRODUCTO);
+				insertsBDInDTO.setCampos(CamposTablaConstans.CAMPOS_FACTURA_PRODUCTO);
+				parametros.add(SecuenciasConstans.NEXT_FACTURA_PRODUCTO);
+				idFactura = consultarIdFacturaPorNumero(usuarioInDTO.getNumeroFactura(), conexion);
+				parametros.add(idFactura);
+				parametros.add(p.getIdProducto());
+				parametros.add(operacionesBD.fechaStringPorDate(new Date()));
+				parametros.add(p.getCantidad());
+				parametros.add(p.getNombreProducto() + " " + p.getPeso() + " " + p.getUnidadMedidad());
+				insertsBDInDTO.setParametros(parametros);
+				resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
+				// se resta del lote la cantidad agregada
+				restarCantidadProductos(p, conexion);
+			}
+
+			if (resultado.equals(EstadosOperaciones.EXITO.getEstado())) {
+				return MensajesConstans.REGISTRO_EXITOSO;
+			} else {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			}
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+	}
+
+	private void restarCantidadProductos(ProductoDTO p, Connection conexion) throws BusinessException {
+		List<Object> parametros = new ArrayList<Object>();
+		parametros.add(p.getIdProducto());
+		OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+		consultasInDTO.setConexion(conexion);
+		consultasInDTO.setConsulta("SELECT CANTIDAD, NOMBRE FROM PRODUCTOS WHERE ID_PRODUCTO = ?");
+		consultasInDTO.setParametros(parametros);
+		// primero se verifica y consulta cantidad
+		ResultSet rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+		int cant = 0;
+		String nombre = "";
+		try {
+			if (rs.next()) {
+				cant = rs.getInt(1);
+				nombre = rs.getString(2);
+			}
+		} catch (Exception e) {
+			cant = 0;
+		}
+		if (rs != null) {
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		if (p.getCantidad() > cant) {
+			ResultSecurityDTO result = new ResultSecurityDTO();
+			result.error = new Error();
+			result.error.errorCode = EnumWebServicesErrors.ERROR_MAXIMO_PRODUCTOS.getCodigo();
+			result.error.errorDescription = "El producto " + nombre + " no cuenta con una disponibilidad de "
+					+ p.getCantidad() + " ya que en existencia solo cuenta con " + cant;
+			result.result = false;
+			result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+			throw new BusinessException(result);
+		}
+		parametros = new ArrayList<Object>();
+		parametros.add(p.getCantidad());
+		parametros.add(p.getIdProducto());
+		OperacionesBDInDTO ejecutarInDTO = new OperacionesBDInDTO(
+				"UPDATE PRODUCTOS SET CANTIDAD = (CANTIDAD - ?) WHERE ID_PRODUCTO= ?", conexion, parametros);
+		// se hace el update de factura
+		operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+
+	}
+
+	private Long consultarIdFacturaPorNumero(String numeroFactura, Connection conexion) {
+		List<Object> parametros = new ArrayList<Object>();
+		ResultSet rs = null;
+		Long idFactura = 0L;
+		try {
+			parametros.add(numeroFactura);
+			OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO(
+					"SELECT ID_FACTURA FROM FACTURAS WHERE NUMERO_FACTURA = ?", conexion, parametros);
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+			if (rs.next()) {
+				idFactura = rs.getLong(1);
+			}
+		} catch (Exception e) {
+			return 0L;
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		return idFactura;
+	}
+
+	private List<Object[]> llenarDatosFactura(FacturaDTO usuarioInDTO) {
+
+		List<Object[]> ups = new ArrayList<Object[]>();
+		Object[] o = new Object[2];
+		o[0] = "ID_FACTURA";
+		o[1] = usuarioInDTO.getIdFactura();
+		ups.add(o);
+
+		return ups;
+
+	}
+
+	@Override
+	public String abonarFactura(DetalleFacturaDTO detalleFacturaDTO) throws TechnicalException, BusinessException {
+
+		InsertsBDInDTO insertsBDInDTO = new InsertsBDInDTO();
+		Connection conexion = null;
+		try {
+			String resultado = "";
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			List<Object> parametros = new ArrayList<Object>();
+			insertsBDInDTO.setConexion(conexion);
+			insertsBDInDTO.setTabla(TablasConstans.DETALLE_FACTURA);
+			insertsBDInDTO.setCampos(CamposTablaConstans.CAMPOS_DETALLE_FACTURA);
+
+			parametros.add(SecuenciasConstans.NEXT_DETALLE_FACTURA);
+			parametros.add(detalleFacturaDTO.getIdFactura());
+			parametros.add(operacionesBD.fechaStringPorDate(new Date()));
+			parametros.add(detalleFacturaDTO.getValorPagado());
+			// si el valor abonado es = al valor factura estado es = a total
+			BigDecimal valorFactura = consultarValorFactura(detalleFacturaDTO.getIdFactura(), conexion);
+			String estado = EstadoPagosEnum.ABONO.getEstado();
+			if (valorFactura.compareTo(detalleFacturaDTO.getValorPagado()) == 0) {
+				estado = EstadoPagosEnum.PAGO_TOTAL.getEstado();
+			}
+			parametros.add(estado);
+			insertsBDInDTO.setParametros(parametros);
+			// se crea el abono
+			resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
+			// se actualizan los valores en la factura
+			actualizarValoresFactura(detalleFacturaDTO, conexion);
+			if (resultado.equals(EstadosOperaciones.EXITO.getEstado())) {
+				return MensajesConstans.REGISTRO_EXITOSO;
+			} else {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			}
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+		}
+	}
+
+	private String actualizarValoresFactura(DetalleFacturaDTO detalleFacturaDTO, Connection conexion)
+			throws TechnicalException, BusinessException {
+		ResultSet rs = null;
+		try {
+			BigDecimal valorDeuda = BigDecimal.ZERO;
+			BigDecimal valorPagado = BigDecimal.ZERO;
+			BigDecimal valorFactura = BigDecimal.ZERO;
+			List<Object> parametros = new ArrayList<Object>();
+			parametros.add(detalleFacturaDTO.getIdFactura());
+			OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO(
+					"SELECT VALOR_FACTURA, VALOR_DEUDA,VALOR_PAGADO FROM FACTURAS WHERE ID_FACTURA= ?", conexion,
+					parametros);
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+			String estado = EstadoFacturasEnum.EN_ABONO.getEstado();
+			if (rs.next()) {
+				valorFactura = rs.getBigDecimal(1);
+				valorDeuda = rs.getBigDecimal(2);
+				valorPagado = rs.getBigDecimal(3);
+				valorDeuda = valorDeuda.subtract(detalleFacturaDTO.getValorPagado());
+				valorPagado = valorPagado.add(detalleFacturaDTO.getValorPagado());
+				if (valorDeuda.compareTo(BigDecimal.ZERO) <= 0) {
+					// se cambia el estado de la factura
+					estado = EstadoFacturasEnum.PAGADA.getEstado();
+					valorDeuda = BigDecimal.ZERO;
+				}
+				if (valorPagado.compareTo(valorFactura) >= 0) {
+					// se cambia el estado de la factura
+					estado = EstadoFacturasEnum.PAGADA.getEstado();
+					valorPagado = valorFactura;
+				}
+				parametros = new ArrayList<Object>();
+				parametros.add(valorDeuda);
+				parametros.add(valorPagado);
+				parametros.add(estado);
+				parametros.add(detalleFacturaDTO.getIdFactura());
+				OperacionesBDInDTO ejecutarInDTO = new OperacionesBDInDTO(
+						"UPDATE FACTURAS SET VALOR_DEUDA = ?, VALOR_PAGADO= ? , ESTADO = ? WHERE ID_FACTURA= ?",
+						conexion, parametros);
+				// se hace el update de factura
+				Integer resultado = operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+				if (resultado.compareTo(EstadosOperaciones.EXITO.getId()) == 0) {
+					return MensajesConstans.REGISTRO_EXITOSO;
+				} else {
+					ResultSecurityDTO result = new ResultSecurityDTO();
+					result.error = new Error();
+					result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+					result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+					result.result = false;
+					result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+					throw new BusinessException(result);
+				}
+			}
+		} catch (Exception e) {
+			// no se actualizaron los valores
+			System.out.println("Error");
+
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		return MensajesConstans.REGISTRO_EXITOSO;
+
+	}
+
+	private BigDecimal consultarValorFactura(Long idFactura, Connection conexion) {
+		ResultSet rs = null;
+		BigDecimal valorFactura = null;
+		try {
+			OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+			consultasInDTO.setConexion(conexion);
+			consultasInDTO.setConsulta("SELECT VALOR_FACTURA FROM FACTURAS WHERE ID_FACTURA = ?");
+			List<Object> parametros = new ArrayList<Object>();
+			parametros.add(idFactura);
+			consultasInDTO.setParametros(parametros);
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+			if (rs.next()) {
+				valorFactura = rs.getBigDecimal(1);
+			}
+		} catch (Exception e) {
+			return BigDecimal.ZERO;
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		return valorFactura;
+	}
+
+	@Override
+	public List<FacturaDTO> consultasFacturas(String numeroFactura, String estado, String numeroId, Integer dias)
+			throws TechnicalException, BusinessException {
+
+		Connection conexion = null;
+		try {
+			List<FacturaDTO> result = null;
+			ProductosDAO dao = ProductosDAO.getInstance();
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			result = dao.consultarFacturas(numeroFactura, estado, numeroId, dias, conexion);
+			return result;
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+		}
+	}
+
+	@Override
+	public String cambiarEstadoFactura(FacturaDTO usuarioInDTO) throws TechnicalException, BusinessException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String eliminarFactura(FacturaDTO usuarioInDTO) throws TechnicalException, BusinessException {
+		Connection conexion = null;
+		try {
+			Integer resultado = null;
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			List<Object> parametros = new ArrayList<Object>();
+			parametros.add(usuarioInDTO.getIdFactura());
+			OperacionesBDInDTO ejecutarInDTO = null;
+
+			parametros = new ArrayList<Object>();
+			parametros.add(usuarioInDTO.getIdFactura());
+			ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM FACTURA_PRODUCTO WHERE ID_FACTURA = ?", conexion,
+					parametros);
+			operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+			ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM DETALLE_FACTURA WHERE ID_FACTURA = ?", conexion,
+					parametros);
+			operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+			ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM FACTURAS WHERE ID_FACTURA = ?", conexion, parametros);
+			resultado = operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+			if (resultado.compareTo(EstadosOperaciones.EXITO.getId()) == 0) {
+				return MensajesConstans.REGISTRO_EXITOSO;
+			} else {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			}
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+		}
+	}
+
+	@Override
+	public String generarReporte(ReporteDTO reporteDTO) throws TechnicalException, BusinessException {
+		try {
+			if (reporteDTO.getTipoReporte().equals("Facturas")) {
+				generarReporteFacturas(reporteDTO);
+			} else if (reporteDTO.getTipoReporte().equals("Productos")) {
+				generarReporteProductos(reporteDTO);
+			} else if (reporteDTO.getTipoReporte().equals("Cuentas por cobrar")) {
+				generarReporteCuentasCobrar(reporteDTO);
+			}
+		} catch (Exception e) {
+			return "Error";
+		}
+
+		return MensajesConstans.REGISTRO_EXITOSO;
+	}
+
+	private void generarReporteCuentasCobrar(ReporteDTO reporteDTO) {
+		// Creacion del documento con los margenes
+		Document document = new Document(PageSize.A4);
+
+		// El archivo pdf que vamos a generar
+		FileOutputStream fileOutputStream;
+		ResultSet rs2=null;
+		ResultSet rs=null;
+		try {
+
+			Connection conexion = null;
+			try {
+				conexion = ConnectionUtils.getInstance().getConnectionBack();
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+
+			String ruta = null;
+			ResultSet rs3 = null;
+			try {
+				OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+				consultasInDTO = new OperacionesBDInDTO("SELECT VALOR FROM PARAMETROS WHERE ID_PARAMETRO = 1", conexion,
+						new ArrayList<>());
+				rs3 = operacionesBD.ejecutarConsulta(consultasInDTO);
+				if (rs3.next()) {
+					ruta = rs3.getString(1);
+				}
+			} catch (Exception e) {
+				ruta = "";
+				System.out.println(e);
+			}
+			if (rs3 != null) {
+				try {
+					rs3.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			Date fechaActual = new Date();
+			String fe = operacionesBD.fechaStringhoraPorDateReporte(fechaActual);
+			String nombreReporte=ruta + "\\reporteCuentasCobrar" + fe + ".pdf";
+			fileOutputStream = new FileOutputStream(nombreReporte);
+			// Obtener la instancia del PdfWriter
+			PdfWriter.getInstance(document, fileOutputStream);
+			// Abrir el documento
+			document.open();
+
+			// Creacion del parrafo
+			Paragraph paragraph = new Paragraph();
+
+			// Agregar un titulo con su respectiva fuente
+			paragraph.add(new Phrase("CUENTAS POR COBRAR"));
+
+			// Agregar saltos de linea
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			document.add(paragraph);
+			OperacionesBDInDTO consulta = new OperacionesBDInDTO();
+			consulta.setConexion(conexion);
+			consulta.setConsulta("select TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CORREO,DIRECCION, C.ID_CLIENTE from CLIENTES C WHERE C.NUMID IN (SELECT F.ID_CLIENTE FROM FACTURAS F WHERE f.valor_deuda > 0)");
+		    rs = operacionesBD.ejecutarConsulta(consulta);
+			String tipo="";
+			// Creacion de una tabla
+			
+			com.itextpdf.text.Font f4 = FontFactory.getFont(
+					  FontFactory.TIMES_ROMAN, 14,
+					  BaseColor.GREEN);
+			
+			com.itextpdf.text.Font f3 = FontFactory.getFont(
+					  FontFactory.TIMES_ROMAN, 14,
+					  BaseColor.BLUE);
+			
+			
+			float[] anchocolumnas = new float[6];
+			for(int j=0; j<6;j++)
+			{
+			anchocolumnas[j] =.50f;
+			}
+			
+			float[] anchocolumnas2 = new float[7];
+			for(int j=0; j<7;j++)
+			{
+			anchocolumnas2[j] =.50f;
+			} 
+			while (rs.next()) {
+				List<Object> parametros = new ArrayList<>();
+				PdfPTable table = new PdfPTable(anchocolumnas);
+				PdfPCell cell = new PdfPCell(new Paragraph("Tipo documento",f4));
+	            table.addCell(cell);
+	            cell = new PdfPCell(new Paragraph("Documento",f4));
+	            table.addCell(cell);
+	            cell = new PdfPCell(new Paragraph("Nombres",f4));
+	            table.addCell(cell);
+	            cell = new PdfPCell(new Paragraph("Telefonos",f4));
+	            table.addCell(cell);
+	            cell = new PdfPCell(new Paragraph("Correo",f4));
+	            table.addCell(cell);
+	            cell = new PdfPCell(new Paragraph("Dirección",f4));
+	            table.addCell(cell);
+
+
+				PdfPTable tableFacturas = new PdfPTable(anchocolumnas2);
+				if(rs.getLong(1) == 2){
+					tipo = "Cédula ciudadania";
+				}
+				else if(rs.getLong(1) == 4){
+					tipo ="NIT";
+				}
+	            
+				table.addCell(tipo);
+				table.addCell(rs.getString(2)+"");
+				table.addCell(rs.getString(3));
+				table.addCell(rs.getLong(4)+"-"+rs.getLong(5));
+				table.addCell(rs.getString(6));
+				table.addCell(rs.getString(7));
+
+				document.add(table);
+				parametros.add(rs.getString(2));
+				consulta = new OperacionesBDInDTO("select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO from FACTURAS WHERE ID_CLIENTE= ?", conexion, parametros);
+			    rs2 = operacionesBD.ejecutarConsulta(consulta);
+				
+			    paragraph = new Paragraph();
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				document.add(paragraph);
+
+				cell = new PdfPCell(new Paragraph("Operación",f3));
+				tableFacturas.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Fecha factura",f3));
+				tableFacturas.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Días",f3));
+				tableFacturas.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Número factura",f3));
+				tableFacturas.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Valor factura",f3));
+				tableFacturas.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Valor pagado",f3));
+				tableFacturas.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Valor deuda",f3));
+				tableFacturas.addCell(cell);
+	            BigDecimal sumaTotal = BigDecimal.ZERO;
+	            BigDecimal sumaPagado = BigDecimal.ZERO;
+	            BigDecimal sumaDeuda = BigDecimal.ZERO;
+				while (rs2.next()) {
+					tableFacturas.addCell("Factura");
+					tableFacturas.addCell(rs2.getString(1));
+					tableFacturas.addCell(rs2.getInt(2)+"");
+					tableFacturas.addCell(rs2.getString(3));
+					tableFacturas.addCell(rs2.getBigDecimal(5)+"");
+					tableFacturas.addCell(rs2.getBigDecimal(7)+"");
+					tableFacturas.addCell(rs2.getBigDecimal(6)+"");
+					sumaTotal=sumaTotal.add(rs2.getBigDecimal(5));
+					sumaPagado=sumaPagado.add(rs2.getBigDecimal(7));
+					sumaDeuda=sumaDeuda.add(rs2.getBigDecimal(6));
+				}
+				
+				PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + sumaTotal));
+				celdaSum.setColspan(8);
+	            tableFacturas.addCell(celdaSum);
+	            
+	            celdaSum = new PdfPCell(new Paragraph("Valor total pagado cliente: " + sumaPagado));
+	            celdaSum.setColspan(8);
+	            tableFacturas.addCell(celdaSum);
+	            
+	            celdaSum = new PdfPCell(new Paragraph("Valor total adeudado cliente: " + sumaDeuda));
+	            celdaSum.setColspan(8);
+	            tableFacturas.addCell(celdaSum);
+				document.add(tableFacturas);
+				paragraph = new Paragraph();
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				document.add(paragraph);
+			}
+			
+			paragraph = new Paragraph();
+			
+			paragraph.add(new Phrase("Final del documento. Reporte inicial facturas Urbanatt"));
+			document.add(paragraph);
+
+			// Cerrar el documento
+			document.close();
+			// Abrir el archivo
+			File file = new File(nombreReporte);
+			Desktop.getDesktop().open(file);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DocumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally {
+			if(rs2 != null){
+				try {
+					rs2.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			if(rs!=null){
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+
+	}
+
+	private void generarReporteFacturas(ReporteDTO reporteDTO) {
+		HSSFWorkbook workbook = new HSSFWorkbook();
+		HSSFSheet sheet = workbook.createSheet();
+		workbook.setSheetName(0, "Hoja excel");
+
+		String[] headers = new String[] { "Número factura", "Nombre cliente", "Valor factura", "Valor pagado",
+				"Valor deuda", "Fecha factura", "Días por factura", "Detalle productos" };
+		Connection conexion = null;
+		try {
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		ResultSet rs = null;
+		OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+		try {
+			StringBuilder consulta = new StringBuilder();
+			List<Object> parametros = new ArrayList<>();
+			consulta.append(
+					"select DISTINCT F.NUMERO_FACTURA, C.NOMBRECOMPLETO, F.VALOR_FACTURA, F.VALOR_PAGADO, F.VALOR_DEUDA, F.FECHA_FACTURA,sysdate-TO_DATE(F.FECHA_FACTURA, 'dd/MM/yy')  AS DIAS, F.ID_FACTURA from FACTURAS F "
+							+ " INNER JOIN CLIENTES C ON F.ID_CLIENTE=C.NUMID "
+							+ " INNER JOIN FACTURA_PRODUCTO FP ON FP.ID_FACTURA=F.ID_FACTURA INNER JOIN PRODUCTOS P ON P.ID_PRODUCTO=FP.ID_PRODUCTO WHERE F.ID_FACTURA IS NOT NULL ");
+			if (reporteDTO.getDiasFactura() != null && reporteDTO.getDiasFactura() > 0) {
+				consulta.append(" AND sysdate-TO_DATE(F.FECHA_FACTURA, 'dd/MM/yy') >= ? ");
+				parametros.add(reporteDTO.getDiasFactura());
+			}
+			if (reporteDTO.getIdCliente() != null) {
+				consulta.append(" AND F.ID_CLIENTE = ? ");
+				parametros.add(reporteDTO.getIdCliente());
+			}
+			if (reporteDTO.getIdProducto() != null) {
+				consulta.append(" AND FP.ID_PRODUCTO = ? ");
+				parametros.add(reporteDTO.getIdCliente());
+			}
+
+			consulta.append(" ORDER BY C.NOMBRECOMPLETO, TO_DATE(F.FECHA_FACTURA, 'dd/MM/yy') DESC ");
+			consultasInDTO.setConexion(conexion);
+			consultasInDTO.setParametros(parametros);
+			consultasInDTO.setConsulta(consulta.toString());
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+
+			int contador = 0;
+			List<Object[]> lista = new ArrayList<Object[]>();
+			Object[] a = null;
+			while (rs.next()) {
+				contador++;
+				a = new Object[8];
+				a[0] = rs.getString(1);
+				a[1] = rs.getString(2);
+				a[2] = rs.getBigDecimal(3);
+				a[3] = rs.getBigDecimal(4);
+				a[4] = rs.getBigDecimal(5);
+				a[5] = rs.getString(6);
+				a[6] = rs.getInt(7);
+				a[7] = consultarDetalles(rs.getLong(8), conexion);
+				lista.add(a);
+			}
+
+			Object[][] data = new Object[contador][];
+			for (int i = 0; i < lista.size(); i++) {
+				data[i] = new Object[8];
+				data[i][0] = lista.get(i)[0];
+				data[i][1] = lista.get(i)[1];
+				data[i][2] = lista.get(i)[2];
+				data[i][3] = lista.get(i)[3];
+				data[i][4] = lista.get(i)[4];
+				data[i][5] = lista.get(i)[5];
+				data[i][6] = lista.get(i)[6];
+				data[i][7] = lista.get(i)[7];
+			}
+
+			CellStyle headerStyle = workbook.createCellStyle();
+			Font font = workbook.createFont();
+			font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+			headerStyle.setFont(font);
+
+			CellStyle style = workbook.createCellStyle();
+			style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+			HSSFRow headerRow = sheet.createRow(0);
+			for (int j = 0; j < headers.length; ++j) {
+				String header = headers[j];
+				HSSFCell cell = headerRow.createCell(j);
+				cell.setCellStyle(headerStyle);
+				cell.setCellValue(header);
+			}
+
+			for (int i = 0; i < data.length; ++i) {
+				HSSFRow dataRow = sheet.createRow(i + 1);
+
+				Object[] d = data[i];
+				String numFac = (String) d[0];
+				String nonmbre = (String) d[1];
+				BigDecimal valFac = (BigDecimal) d[2];
+				BigDecimal valPag = (BigDecimal) d[3];
+				BigDecimal valDeu = (BigDecimal) d[4];
+				String fecha = (String) d[5];
+				Integer dias = (Integer) d[6];
+				String resumen = (String) d[7];
+				dataRow.createCell(0).setCellValue(numFac);
+				dataRow.createCell(1).setCellValue(nonmbre);
+				dataRow.createCell(2).setCellValue(valFac.doubleValue());
+				dataRow.createCell(3).setCellValue(valPag.doubleValue());
+				dataRow.createCell(4).setCellValue(valDeu.doubleValue());
+				dataRow.createCell(5).setCellValue(fecha);
+				dataRow.createCell(6).setCellValue(dias);
+				dataRow.createCell(7).setCellValue(resumen);
+			}
+
+			// HSSFRow dataRow = sheet.createRow(1 + data.length);
+			// HSSFCell total = dataRow.createCell(1);
+			// total.setCellType(1);
+			// total.setCellStyle(style);
+			// total.setCellFormula(String.format("SUM(B2:B%d)", 1 +
+			// data.length));
+		} catch (Exception e) {
+			System.out.println(e);
+		} finally {
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		}
+		FileOutputStream file;
+		Date fechaActual = new Date();
+		String fe = operacionesBD.fechaStringPorDateReporte(fechaActual);
+
+		String ruta = null;
+		rs = null;
+		try {
+			consultasInDTO = new OperacionesBDInDTO("SELECT VALOR FROM PARAMETROS WHERE ID_PARAMETRO = 1", conexion,
+					new ArrayList<>());
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+			if (rs.next()) {
+				ruta = rs.getString(1);
+			}
+		} catch (Exception e) {
+			ruta = "";
+			System.out.println(e);
+		}
+		if (rs != null) {
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		operacionesBD.cerrarStatement();
+		try {
+			reporteDTO.setNombreReporte(
+					reporteDTO.getNombreReporte() == null ? "Reporte" : reporteDTO.getNombreReporte());
+			file = new FileOutputStream(ruta + "\\" + reporteDTO.getNombreReporte() + fe + ".xls");
+			workbook.write(file);
+			file.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	private void generarReporteProductos(ReporteDTO reporteDTO) {
+		HSSFWorkbook workbook = new HSSFWorkbook();
+		HSSFSheet sheet = workbook.createSheet();
+		workbook.setSheetName(0, "Hoja excel");
+
+		String[] headers = new String[] { "Producto", "Inventario", "Ventas", "Enero", "Febrero", "Marzo", "Abril",
+				"Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+		Connection conexion = null;
+		try {
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		ResultSet rs = null;
+		OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+		try {
+			StringBuilder consulta = new StringBuilder();
+			List<Object> parametros = new ArrayList<>();
+			consulta.append(
+					"SELECT CONCAT(CONCAT(CONCAT(CONCAT(P.NOMBRE, ' '), P.PESO), ' '), P.UNIDAD) AS PRODUCTO, P.CANTIDAD AS INVENTARIO, "
+							+ " (SELECT SUM(FP.CANTIDAD) FROM FACTURA_PRODUCTO FP WHERE FP.ID_PRODUCTO=P.ID_PRODUCTO GROUP BY FP.ID_PRODUCTO) AS  VENTAS , P.ID_PRODUCTO"
+							+ " FROM PRODUCTOS P ");
+			consultasInDTO.setConexion(conexion);
+			consultasInDTO.setParametros(parametros);
+			consultasInDTO.setConsulta(consulta.toString());
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+
+			int contador = 0;
+			List<Object[]> lista = new ArrayList<Object[]>();
+			Object[] a = null;
+			Object[] meses = null;
+			int pos = 3;
+			while (rs.next()) {
+				contador++;
+				a = new Object[15];
+				a[0] = rs.getString(1);
+				a[1] = rs.getInt(2);
+				a[2] = rs.getInt(3);
+				pos = 3;
+				meses = consultaMeses(conexion, rs.getLong(4));
+				for (Object object : meses) {
+					a[pos] = object;
+					pos++;
+				}
+				lista.add(a);
+			}
+
+			Object[][] data = new Object[contador][];
+			for (int i = 0; i < lista.size(); i++) {
+				data[i] = new Object[15];
+				data[i][0] = lista.get(i)[0];
+				data[i][1] = lista.get(i)[1];
+				data[i][2] = lista.get(i)[2];
+				data[i][3] = lista.get(i)[3];
+				data[i][4] = lista.get(i)[4];
+				data[i][5] = lista.get(i)[5];
+				data[i][6] = lista.get(i)[6];
+				data[i][7] = lista.get(i)[7];
+				data[i][8] = lista.get(i)[8];
+				data[i][9] = lista.get(i)[9];
+				data[i][10] = lista.get(i)[10];
+				data[i][11] = lista.get(i)[11];
+				data[i][12] = lista.get(i)[12];
+				data[i][13] = lista.get(i)[13];
+				data[i][14] = lista.get(i)[14];
+			}
+
+			CellStyle headerStyle = workbook.createCellStyle();
+			Font font = workbook.createFont();
+			font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+			headerStyle.setFont(font);
+
+			CellStyle style = workbook.createCellStyle();
+			style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+			HSSFRow headerRow = sheet.createRow(0);
+			for (int j = 0; j < headers.length; ++j) {
+				String header = headers[j];
+				HSSFCell cell = headerRow.createCell(j);
+				cell.setCellStyle(headerStyle);
+				cell.setCellValue(header);
+			}
+
+			for (int i = 0; i < data.length; ++i) {
+				HSSFRow dataRow = sheet.createRow(i + 1);
+
+				Object[] d = data[i];
+				String nombreProd = (String) d[0];
+				Integer cantidad = (Integer) d[1];
+				Integer ventas = (Integer) d[2];
+				Integer e = (Integer) d[3];
+				Integer f = (Integer) d[4];
+				Integer m = (Integer) d[5];
+				Integer ab = (Integer) d[6];
+				Integer my = (Integer) d[7];
+				Integer ju = (Integer) d[8];
+				Integer jul = (Integer) d[9];
+				Integer ag = (Integer) d[10];
+				Integer sp = (Integer) d[11];
+				Integer oc = (Integer) d[12];
+				Integer no = (Integer) d[13];
+				Integer di = (Integer) d[14];
+				dataRow.createCell(0).setCellValue(nombreProd);
+				dataRow.createCell(1).setCellValue(cantidad);
+				dataRow.createCell(2).setCellValue(ventas);
+				dataRow.createCell(3).setCellValue(e);
+				dataRow.createCell(4).setCellValue(f);
+				dataRow.createCell(5).setCellValue(m);
+				dataRow.createCell(6).setCellValue(ab);
+				dataRow.createCell(7).setCellValue(my);
+				dataRow.createCell(8).setCellValue(ju);
+				dataRow.createCell(9).setCellValue(jul);
+				dataRow.createCell(10).setCellValue(ag);
+				dataRow.createCell(11).setCellValue(sp);
+				dataRow.createCell(12).setCellValue(oc);
+				dataRow.createCell(13).setCellValue(no);
+				dataRow.createCell(14).setCellValue(di);
+			}
+
+			// HSSFRow dataRow = sheet.createRow(1 + data.length);
+			// HSSFCell total = dataRow.createCell(1);
+			// total.setCellType(1);
+			// total.setCellStyle(style);
+			// total.setCellFormula(String.format("SUM(B2:B%d)", 1 +
+			// data.length));
+		} catch (Exception e) {
+			System.out.println(e);
+		} finally {
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		}
+		FileOutputStream file;
+		Date fechaActual = new Date();
+		String fe = operacionesBD.fechaStringPorDateReporte(fechaActual);
+
+		String ruta = null;
+		rs = null;
+		try {
+			consultasInDTO = new OperacionesBDInDTO("SELECT VALOR FROM PARAMETROS WHERE ID_PARAMETRO = 1", conexion,
+					new ArrayList<>());
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+			if (rs.next()) {
+				ruta = rs.getString(1);
+			}
+		} catch (Exception e) {
+			ruta = "";
+			System.out.println(e);
+		}
+		if (rs != null) {
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		operacionesBD.cerrarStatement();
+		try {
+			reporteDTO.setNombreReporte(
+					reporteDTO.getNombreReporte() == null ? "Reporte" : reporteDTO.getNombreReporte());
+			file = new FileOutputStream(ruta + "\\" + reporteDTO.getNombreReporte() + fe + ".xls");
+			workbook.write(file);
+			file.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	private Object[] consultaMeses(Connection conexion, long idProducto) {
+		ResultSet rs = null;
+		Object[] meses = new Object[12];
+		OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+		try {
+			consultasInDTO.setConexion(conexion);
+			consultasInDTO.setConsulta("SELECT * FROM (SELECT SUM(FP.CANTIDAD) CANT, "
+					+ " extract(month from TO_DATE(FP.FECHA_CREACION,'dd/MM/yyyy')) as mes FROM FACTURA_PRODUCTO FP WHERE ID_PRODUCTO=? "
+					+ " GROUP BY extract(month from TO_DATE(FP.FECHA_CREACION,'dd/MM/yyyy'))) "
+					+ " pivot (sum(CANT) for mes in (1,2,3,4,5,6,7,8,9,10,11,12))");
+			List<Object> parametros = new ArrayList<>();
+			parametros.add(idProducto);
+			consultasInDTO.setParametros(parametros);
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+
+			while (rs.next()) {
+				meses[0] = rs.getInt(1);
+				meses[1] = rs.getInt(2);
+				meses[2] = rs.getInt(3);
+				meses[3] = rs.getInt(4);
+				meses[4] = rs.getInt(5);
+				meses[5] = rs.getInt(6);
+				meses[6] = rs.getInt(7);
+				meses[7] = rs.getInt(8);
+				meses[8] = rs.getInt(9);
+				meses[9] = rs.getInt(10);
+				meses[10] = rs.getInt(11);
+				meses[11] = rs.getInt(12);
+			}
+		} catch (Exception e) {
+			return meses;
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return meses;
+	}
+
+	private String consultarDetalles(long long1, Connection conexion) {
+		ResultSet rs = null;
+		OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+		StringBuilder sb = new StringBuilder();
+		try {
+			consultasInDTO.setConexion(conexion);
+			consultasInDTO.setConsulta(
+					"select CONCAT(CONCAT(CONCAT(P.NOMBRE, ' '), FP.CANTIDAD), ' unidades') AS DETALLE from  FACTURA_PRODUCTO FP "
+							+ "INNER JOIN PRODUCTOS P ON P.ID_PRODUCTO=FP.ID_PRODUCTO " + "WHERE FP.ID_FACTURA=?");
+			List<Object> parametros = new ArrayList<>();
+			parametros.add(long1);
+			consultasInDTO.setParametros(parametros);
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+
+			while (rs.next()) {
+				sb.append(rs.getString(1)).append(", ");
+			}
+		} catch (Exception e) {
+			return "";
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return sb.toString().substring(0, sb.toString().length() - 2);
+	}
+
+	@Override
+	public String revertirFactura(FacturaDTO facturaDTO) throws TechnicalException, BusinessException {
+		Connection conexion = null;
+		try {
+			Integer resultado = null;
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			OperacionesBDInDTO ejecutarInDTO = new OperacionesBDInDTO();
+			List<Object> parametros = new ArrayList<Object>();
+			parametros.add(facturaDTO.getIdFactura());
+			OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+			// Lo primero es consultar los productos que se agregaron a la
+			// factura para volverlos a sumar
+			consultasInDTO.setConexion(conexion);
+			consultasInDTO.setConsulta("select CANTIDAD, ID_PRODUCTO from FACTURA_PRODUCTO WHERE ID_FACTURA= ?");
+			consultasInDTO.setParametros(parametros);
+			ResultSet rsIni = operacionesBD.ejecutarConsulta(consultasInDTO);
+			while (rsIni.next()) {
+				parametros = new ArrayList<Object>();
+				parametros.add(rsIni.getInt(1));
+				parametros.add(rsIni.getLong(2));
+				ejecutarInDTO = new OperacionesBDInDTO(
+						"UPDATE PRODUCTOS SET CANTIDAD = (CANTIDAD + ?) WHERE ID_PRODUCTO= ?", conexion, parametros);
+				operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+			}
+			// luego se borran los detalles factura y abonos
+			parametros = new ArrayList<Object>();
+			parametros.add(facturaDTO.getIdFactura());
+			ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM FACTURA_PRODUCTO WHERE ID_FACTURA = ?", conexion,
+					parametros);
+			operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+			ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM DETALLE_FACTURA WHERE ID_FACTURA = ?", conexion,
+					parametros);
+			operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+			ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM FACTURAS WHERE ID_FACTURA = ?", conexion, parametros);
+			resultado = operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+			if (resultado.compareTo(EstadosOperaciones.EXITO.getId()) == 0) {
+				return MensajesConstans.REGISTRO_EXITOSO;
+			} else {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			}
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+		}
+	}
+
+}
