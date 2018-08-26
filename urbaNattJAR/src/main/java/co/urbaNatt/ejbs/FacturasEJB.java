@@ -13,6 +13,7 @@ import java.net.MalformedURLException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,7 +34,9 @@ import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
 import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
@@ -112,10 +115,17 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				parametros.add(usuarioInDTO.getEstado() == null || usuarioInDTO.getEstado().isEmpty()
 						? EstadoFacturasEnum.NUEVA.getEstado() : usuarioInDTO.getEstado());
 			}
+
+			String fechaA = operacionesBD.fechaStringPorDate(new Date());
 			parametros.add(usuarioInDTO.getValorFactura());
 			parametros.add(usuarioInDTO.getDescripcion());
 			parametros.add(usuarioInDTO.getTipo());
 			parametros.add(usuarioInDTO.getIdSucursal());
+			if (usuarioInDTO.getTipo().equalsIgnoreCase("CONTADO")) {
+				parametros.add(fechaA);
+			} else {
+				parametros.add(null);
+			}
 			insertsBDInDTO.setParametros(parametros);
 			resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
 			Long idFactura = 0L;
@@ -194,7 +204,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			try {
 				rs.close();
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
+				 
 				e.printStackTrace();
 			}
 		}
@@ -246,17 +256,6 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		return idFactura;
 	}
 
-	private List<Object[]> llenarDatosFactura(FacturaDTO usuarioInDTO) {
-
-		List<Object[]> ups = new ArrayList<Object[]>();
-		Object[] o = new Object[2];
-		o[0] = "ID_FACTURA";
-		o[1] = usuarioInDTO.getIdFactura();
-		ups.add(o);
-
-		return ups;
-
-	}
 
 	@Override
 	public String abonarFactura(DetalleFacturaDTO detalleFacturaDTO) throws TechnicalException, BusinessException {
@@ -282,6 +281,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				estado = EstadoPagosEnum.PAGO_TOTAL.getEstado();
 			}
 			parametros.add(estado);
+			parametros.add(detalleFacturaDTO.getNumeroRecibo());
 			insertsBDInDTO.setParametros(parametros);
 			// se crea el abono
 			resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
@@ -354,8 +354,14 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				parametros.add(valorPagado);
 				parametros.add(estado);
 				parametros.add(detalleFacturaDTO.getIdFactura());
+				String fechaA = operacionesBD.fechaStringPorDate(new Date());
+				if (estado == EstadoFacturasEnum.PAGADA.getEstado()) {
+					parametros.add(fechaA);
+				} else {
+					parametros.add(null);
+				}
 				OperacionesBDInDTO ejecutarInDTO = new OperacionesBDInDTO(
-						"UPDATE FACTURAS SET VALOR_DEUDA = ?, VALOR_PAGADO= ? , ESTADO = ? WHERE ID_FACTURA= ?",
+						"UPDATE FACTURAS SET VALOR_DEUDA = ?, VALOR_PAGADO= ? , ESTADO = ?, FECHA_PAGO_TOTAL= ? WHERE ID_FACTURA= ?",
 						conexion, parametros);
 				// se hace el update de factura
 				Integer resultado = operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
@@ -517,6 +523,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				generarReporteProductos(reporteDTO);
 			} else if (reporteDTO.getTipoReporte().equals("Cuentas por cobrar")) {
 				generarReporteCuentasCobrar(reporteDTO);
+			} else if (reporteDTO.getTipoReporte().equals("Facturas por cliente")) {
+				generarReporteFacturasPorCliente(reporteDTO);
 			}
 		} catch (Exception e) {
 			return "Error";
@@ -525,24 +533,26 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		return MensajesConstans.REGISTRO_EXITOSO;
 	}
 
-	private void generarReporteCuentasCobrar(ReporteDTO reporteDTO) {
+	private void generarReporteFacturasPorCliente(ReporteDTO reporteDTO) {
+		NumberFormat formatoImporte = NumberFormat.getCurrencyInstance();
 		// Creacion del documento con los margenes
 		Document document = new Document(PageSize.A4);
 
 		// El archivo pdf que vamos a generar
 		FileOutputStream fileOutputStream;
-		ResultSet rs2=null;
-		ResultSet rs=null;
+		ResultSet rs2 = null;
+		ResultSet rs5 = null;
+		ResultSet rs4=null;
+		ResultSet rs = null;
 		try {
 
 			Connection conexion = null;
 			try {
 				conexion = ConnectionUtils.getInstance().getConnectionBack();
 			} catch (Exception e1) {
-				// TODO Auto-generated catch block
+				 
 				e1.printStackTrace();
 			}
-			
 
 			String ruta = null;
 			ResultSet rs3 = null;
@@ -562,24 +572,46 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				try {
 					rs3.close();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					 
 					e.printStackTrace();
 				}
 			}
 			Date fechaActual = new Date();
 			String fe = operacionesBD.fechaStringhoraPorDateReporte(fechaActual);
-			String nombreReporte=ruta + "\\reporteCuentasCobrar" + fe + ".pdf";
+			String nombreReporte = ruta + "\\reporteCuentasCobrar" + fe + ".pdf";
 			fileOutputStream = new FileOutputStream(nombreReporte);
 			// Obtener la instancia del PdfWriter
 			PdfWriter.getInstance(document, fileOutputStream);
 			// Abrir el documento
 			document.open();
 
+			Image image = null;
+			// Obtenemos el logo de datojava
+			image = Image.getInstance("logoIni.jpg");
+			image.scaleAbsolute(80f, 60f);
+			PdfPTable table = new PdfPTable(1);
+			PdfPCell cell = new PdfPCell(image);
+			cell.setColspan(5);
+			cell.setBorderColor(BaseColor.WHITE);
+			cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+			table.addCell(cell);
+			document.add(table);
+			
 			// Creacion del parrafo
 			Paragraph paragraph = new Paragraph();
-
+			String fechaHora=operacionesBD.fechaStringhoraPorDateReporte(new Date());
 			// Agregar un titulo con su respectiva fuente
-			paragraph.add(new Phrase("CUENTAS POR COBRAR"));
+			paragraph.add(new Phrase("URBANATT FUERZA Y VITALIDAD"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Dirección: Calle falsa 123"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Correo: urbanattproteins@gmail.com"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Fecha-hora: "+fechaHora));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Cuentas por cobrar"));
 
 			// Agregar saltos de linea
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -587,122 +619,510 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			document.add(paragraph);
 			OperacionesBDInDTO consulta = new OperacionesBDInDTO();
 			consulta.setConexion(conexion);
-			consulta.setConsulta("select TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CORREO,DIRECCION, C.ID_CLIENTE from CLIENTES C WHERE C.NUMID IN (SELECT F.ID_CLIENTE FROM FACTURAS F WHERE f.valor_deuda > 0)");
-		    rs = operacionesBD.ejecutarConsulta(consulta);
-			String tipo="";
-			// Creacion de una tabla
-			
-			com.itextpdf.text.Font f4 = FontFactory.getFont(
-					  FontFactory.TIMES_ROMAN, 14,
-					  BaseColor.GREEN);
-			
-			com.itextpdf.text.Font f3 = FontFactory.getFont(
-					  FontFactory.TIMES_ROMAN, 14,
-					  BaseColor.BLUE);
-			
-			
-			float[] anchocolumnas = new float[6];
-			for(int j=0; j<6;j++)
-			{
-			anchocolumnas[j] =.50f;
-			}
-			
-			float[] anchocolumnas2 = new float[7];
-			for(int j=0; j<7;j++)
-			{
-			anchocolumnas2[j] =.50f;
-			} 
-			while (rs.next()) {
-				List<Object> parametros = new ArrayList<>();
-				PdfPTable table = new PdfPTable(anchocolumnas);
-				PdfPCell cell = new PdfPCell(new Paragraph("Tipo documento",f4));
-	            table.addCell(cell);
-	            cell = new PdfPCell(new Paragraph("Documento",f4));
-	            table.addCell(cell);
-	            cell = new PdfPCell(new Paragraph("Nombres",f4));
-	            table.addCell(cell);
-	            cell = new PdfPCell(new Paragraph("Telefonos",f4));
-	            table.addCell(cell);
-	            cell = new PdfPCell(new Paragraph("Correo",f4));
-	            table.addCell(cell);
-	            cell = new PdfPCell(new Paragraph("Dirección",f4));
-	            table.addCell(cell);
+			consulta.setConsulta(
+					"select TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CORREO,DIRECCION, C.ID_CLIENTE from CLIENTES C ");
+			rs = operacionesBD.ejecutarConsulta(consulta);
+			String tipo = "";
+					// Creacion de una tabla
 
+					com.itextpdf.text.Font f4 = FontFactory.getFont(FontFactory.TIMES_ROMAN, 14, new BaseColor(119, 194, 27));
+
+					com.itextpdf.text.Font f3 = FontFactory.getFont(FontFactory.TIMES_ROMAN, 14, new BaseColor(119, 194, 27));
+					
+					com.itextpdf.text.Font fontDeudas = FontFactory.getFont(FontFactory.TIMES_ROMAN, 14, BaseColor.RED);
+					com.itextpdf.text.Font fontNormal = FontFactory.getFont(FontFactory.TIMES_ROMAN, 14, BaseColor.BLACK);
+
+					float[] anchocolumnas = new float[6];
+					for (int j = 0; j < 6; j++) {
+						anchocolumnas[j] = .50f;
+					}
+
+					float[] anchocolumnas2 = new float[9];
+					for (int j = 0; j < 9; j++) {
+						anchocolumnas2[j] = .50f;
+					}
+					
+
+					float[] anchocolumnas3 = new float[5];
+					for (int j = 0; j < 5; j++) {
+						anchocolumnas3[j] = .50f;
+					}
+					
+					while (rs.next()) {
+						paragraph = new Paragraph();
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						paragraph.add(new Phrase("Cliente"));
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						document.add(paragraph);
+						List<Object> parametros = new ArrayList<>();
+						 table = new PdfPTable(anchocolumnas);
+						 cell = new PdfPCell(new Paragraph("Tipo documento", f4));
+						 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						table.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Documento", f4));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						table.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Nombres", f4));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						table.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Telefonos", f4));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						table.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Correo", f4));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						table.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Dirección", f4));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						table.addCell(cell);
+
+						PdfPTable tableFacturas = new PdfPTable(anchocolumnas2);
+						PdfPTable tableAbonos = new PdfPTable(anchocolumnas3);
+						if (rs.getLong(1) == 2) {
+							tipo = "Cédula ciudadania";
+						} else if (rs.getLong(1) == 4) {
+							tipo = "NIT";
+						}
+
+						table.addCell(tipo);
+						table.addCell(rs.getString(2) + "");
+						table.addCell(rs.getString(3));
+						table.addCell(rs.getLong(4) + "-" + rs.getLong(5));
+						table.addCell(rs.getString(6));
+						table.addCell(rs.getString(7));
+
+						document.add(table);
+						parametros.add(rs.getString(2));
+						consulta = new OperacionesBDInDTO(
+								"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO,FECHA_PAGO_TOTAL,ID_FACTURA from FACTURAS WHERE ID_CLIENTE= ?",
+								conexion, parametros);
+						rs2 = operacionesBD.ejecutarConsulta(consulta);
+						consulta = new OperacionesBDInDTO(
+								"SELECT FA.NUMERO_FACTURA,F.FECHA_CREACION,F.NUMERO_RECIBO ,F.VALOR_PAGADO FROM DETALLE_FACTURA F INNER JOIN FACTURAS FA ON FA.ID_FACTURA=F.ID_FACTURA WHERE FA.ID_CLIENTE=? ORDER BY  FA.NUMERO_FACTURA",
+								conexion, parametros);
+						rs5 = operacionesBD.ejecutarConsulta(consulta);
+
+						paragraph = new Paragraph();
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						paragraph.add(new Phrase("Facturas por cliente"));
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						document.add(paragraph);
+
+						cell = new PdfPCell(new Paragraph("Operación", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Fecha factura", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Días", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Número factura", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Valor factura", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Valor pagado", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Valor deuda", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Fecha fin pago", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Cantidad abonos", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						BigDecimal sumaTotal = BigDecimal.ZERO;
+						BigDecimal sumaPagado = BigDecimal.ZERO;
+						BigDecimal sumaDeuda = BigDecimal.ZERO;
+						int cantidad=0;
+						while (rs2.next()) {
+							parametros= new ArrayList<>();
+							parametros.add(rs2.getLong(9));
+							consulta= new OperacionesBDInDTO("select COUNT(D.ID_DETALLE) FROM DETALLE_FACTURA D WHERE D.ID_FACTURA= ?",conexion,parametros);
+							rs4=operacionesBD.ejecutarConsulta(consulta);
+							if(rs4.next()){
+								cantidad=rs4.getInt(1);
+							}
+							if(rs2.getBigDecimal(6).compareTo(BigDecimal.ZERO) > 0){
+								cell = new PdfPCell(new Paragraph("Factura", fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getString(1), fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getInt(2) + "", fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getString(3), fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(formatoImporte.format(rs2.getBigDecimal(5)) + "", fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(formatoImporte.format(rs2.getBigDecimal(7)) + "", fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(formatoImporte.format(rs2.getBigDecimal(6)) + "", fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getString(8), fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(cantidad+"", fontDeudas));
+								tableFacturas.addCell(cell);
+							}
+							else{
+								cell = new PdfPCell(new Paragraph("Factura", fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getString(1), fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getInt(2) + "", fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getString(3), fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(formatoImporte.format(rs2.getBigDecimal(5)) + "", fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(formatoImporte.format(rs2.getBigDecimal(7)) + "", fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(formatoImporte.format(rs2.getBigDecimal(6)) + "", fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getString(8), fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(cantidad+"", fontDeudas));
+								tableFacturas.addCell(cell);
+							}
+							sumaTotal = sumaTotal.add(rs2.getBigDecimal(5));
+							sumaPagado = sumaPagado.add(rs2.getBigDecimal(7));
+							sumaDeuda = sumaDeuda.add(rs2.getBigDecimal(6));
+							
+							
+						}
+
+						PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + formatoImporte.format(sumaTotal),fontNormal));
+						celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
+						celdaSum.setColspan(9);
+						tableFacturas.addCell(celdaSum);
+
+						celdaSum = new PdfPCell(new Paragraph("Valor total pagado cliente: " + formatoImporte.format(sumaPagado),fontNormal));
+						celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
+						celdaSum.setColspan(9);
+						tableFacturas.addCell(celdaSum);
+
+						celdaSum = new PdfPCell(new Paragraph("Valor total adeudado cliente: " + formatoImporte.format(sumaDeuda),fontNormal));
+						celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
+						celdaSum.setColspan(9);
+						tableFacturas.addCell(celdaSum);
+						document.add(tableFacturas);
+						
+						
+						paragraph = new Paragraph();
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						paragraph.add(new Phrase("Abonos facturas cliente"));
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						paragraph.add(new Phrase(Chunk.NEWLINE));
+						document.add(paragraph);
+
+						cell = new PdfPCell(new Paragraph("Operación", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableAbonos.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Número factura", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableAbonos.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Fecha abono", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableAbonos.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Número recibo", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableAbonos.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Valor abonado", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableAbonos.addCell(cell);
+						while (rs5.next()) {
+								cell = new PdfPCell(new Paragraph("Abono", fontNormal));
+								tableAbonos.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs5.getString(1), fontNormal));
+								tableAbonos.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs5.getString(2)+ "", fontNormal));
+								tableAbonos.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs5.getString(3)+ "", fontNormal));
+								tableAbonos.addCell(cell);
+								cell = new PdfPCell(new Paragraph(formatoImporte.format(rs5.getBigDecimal(4))+"", fontNormal));
+								tableAbonos.addCell(cell);
+						}
+						
+						document.add(tableAbonos);
+					}
+
+					
+					
+					paragraph = new Paragraph();
+
+					paragraph.add(new Phrase("Final del documento. Reporte total facturas por cliente Urbanatt"));
+					document.add(paragraph);
+
+					// Cerrar el documento
+					document.close();
+					// Abrir el archivo
+					File file = new File(nombreReporte);
+					Desktop.getDesktop().open(file);
+				} catch (FileNotFoundException e) {
+					 
+					e.printStackTrace();
+				} catch (DocumentException e) {
+					 
+					e.printStackTrace();
+				} catch (MalformedURLException e) {
+					 
+					e.printStackTrace();
+				} catch (IOException e) {
+					 
+					e.printStackTrace();
+				} catch (SQLException e) {
+					 
+					e.printStackTrace();
+				} finally {
+					if (rs4 != null) {
+						try {
+							rs4.close();
+						} catch (SQLException e) {
+							 
+							e.printStackTrace();
+						}
+					}
+					if (rs2 != null) {
+						try {
+							rs2.close();
+						} catch (SQLException e) {
+							 
+							e.printStackTrace();
+						}
+					}
+					if (rs != null) {
+						try {
+							rs.close();
+						} catch (SQLException e) {
+							 
+							e.printStackTrace();
+						}
+					}
+					operacionesBD.cerrarStatement();
+				}
+		
+	}
+
+	private void generarReporteCuentasCobrar(ReporteDTO reporteDTO) {
+		NumberFormat formatoImporte = NumberFormat.getCurrencyInstance();
+		// Creacion del documento con los margenes
+		Document document = new Document(PageSize.A4);
+
+		// El archivo pdf que vamos a generar
+		FileOutputStream fileOutputStream;
+		ResultSet rs2 = null;
+		ResultSet rs = null;
+		try {
+
+			Connection conexion = null;
+			try {
+				conexion = ConnectionUtils.getInstance().getConnectionBack();
+			} catch (Exception e1) {
+				 
+				e1.printStackTrace();
+			}
+
+			String ruta = null;
+			ResultSet rs3 = null;
+			try {
+				OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+				consultasInDTO = new OperacionesBDInDTO("SELECT VALOR FROM PARAMETROS WHERE ID_PARAMETRO = 1", conexion,
+						new ArrayList<>());
+				rs3 = operacionesBD.ejecutarConsulta(consultasInDTO);
+				if (rs3.next()) {
+					ruta = rs3.getString(1);
+				}
+			} catch (Exception e) {
+				ruta = "";
+				System.out.println(e);
+			}
+			if (rs3 != null) {
+				try {
+					rs3.close();
+				} catch (SQLException e) {
+					 
+					e.printStackTrace();
+				}
+			}
+			Date fechaActual = new Date();
+			String fe = operacionesBD.fechaStringhoraPorDateReporte(fechaActual);
+			String nombreReporte = ruta + "\\reporteCuentasCobrar" + fe + ".pdf";
+			fileOutputStream = new FileOutputStream(nombreReporte);
+			// Obtener la instancia del PdfWriter
+			PdfWriter.getInstance(document, fileOutputStream);
+			// Abrir el documento
+			document.open();
+
+			Image image = null;
+			// Obtenemos el logo de datojava
+			image = Image.getInstance("logoIni.jpg");
+			image.scaleAbsolute(80f, 60f);
+			PdfPTable table = new PdfPTable(1);
+			PdfPCell cell = new PdfPCell(image);
+			cell.setColspan(5);
+			cell.setBorderColor(BaseColor.WHITE);
+			cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+			table.addCell(cell);
+			document.add(table);
+			
+			// Creacion del parrafo
+			Paragraph paragraph = new Paragraph();
+			String fechaHora=operacionesBD.fechaStringhoraPorDateReporte(new Date());
+			// Agregar un titulo con su respectiva fuente
+			paragraph.add(new Phrase("URBANATT FUERZA Y VITALIDAD"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Dirección: Calle falsa 123"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Correo: urbanattproteins@gmail.com"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Fecha-hora: "+fechaHora));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Cuentas por cobrar"));
+
+			// Agregar saltos de linea
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			document.add(paragraph);
+			OperacionesBDInDTO consulta = new OperacionesBDInDTO();
+			consulta.setConexion(conexion);
+			consulta.setConsulta(
+					"select TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CORREO,DIRECCION, C.ID_CLIENTE from CLIENTES C WHERE C.NUMID IN (SELECT F.ID_CLIENTE FROM FACTURAS F WHERE f.valor_deuda > 0)");
+			rs = operacionesBD.ejecutarConsulta(consulta);
+			String tipo = "";
+			// Creacion de una tabla
+
+			com.itextpdf.text.Font f4 = FontFactory.getFont(FontFactory.TIMES_ROMAN, 14, new BaseColor(119, 194, 27));
+
+			com.itextpdf.text.Font f3 = FontFactory.getFont(FontFactory.TIMES_ROMAN, 14, new BaseColor(119, 194, 27));
+			float[] anchocolumnas = new float[6];
+			for (int j = 0; j < 6; j++) {
+				anchocolumnas[j] = .50f;
+			}
+
+			float[] anchocolumnas2 = new float[7];
+			for (int j = 0; j < 7; j++) {
+				anchocolumnas2[j] = .50f;
+			}
+				
+			while (rs.next()) {
+				paragraph = new Paragraph();
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				paragraph.add(new Phrase("Cliente"));
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				document.add(paragraph);
+				List<Object> parametros = new ArrayList<>();
+				table = new PdfPTable(anchocolumnas);
+				cell = new PdfPCell(new Paragraph("Tipo documento", f4));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				table.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Documento", f4));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				table.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Nombres", f4));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				table.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Telefonos", f4));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				table.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Correo", f4));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				table.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Dirección", f4));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				table.addCell(cell);
 
 				PdfPTable tableFacturas = new PdfPTable(anchocolumnas2);
-				if(rs.getLong(1) == 2){
+				if (rs.getLong(1) == 2) {
 					tipo = "Cédula ciudadania";
+				} else if (rs.getLong(1) == 4) {
+					tipo = "NIT";
 				}
-				else if(rs.getLong(1) == 4){
-					tipo ="NIT";
-				}
-	            
+
 				table.addCell(tipo);
-				table.addCell(rs.getString(2)+"");
+				table.addCell(rs.getString(2) + "");
 				table.addCell(rs.getString(3));
-				table.addCell(rs.getLong(4)+"-"+rs.getLong(5));
+				table.addCell(rs.getLong(4) + "-" + rs.getLong(5));
 				table.addCell(rs.getString(6));
 				table.addCell(rs.getString(7));
 
 				document.add(table);
 				parametros.add(rs.getString(2));
-				consulta = new OperacionesBDInDTO("select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO from FACTURAS WHERE ID_CLIENTE= ?", conexion, parametros);
-			    rs2 = operacionesBD.ejecutarConsulta(consulta);
+				consulta = new OperacionesBDInDTO(
+						"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO from FACTURAS WHERE ID_CLIENTE= ?",
+						conexion, parametros);
+				rs2 = operacionesBD.ejecutarConsulta(consulta);
+
 				
-			    paragraph = new Paragraph();
+				paragraph = new Paragraph();
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				paragraph.add(new Phrase("Facturas por cliente"));
+				paragraph.add(new Phrase(Chunk.NEWLINE));
 				paragraph.add(new Phrase(Chunk.NEWLINE));
 				document.add(paragraph);
 
-				cell = new PdfPCell(new Paragraph("Operación",f3));
+				cell = new PdfPCell(new Paragraph("Operación", f3));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableFacturas.addCell(cell);
-				cell = new PdfPCell(new Paragraph("Fecha factura",f3));
+				cell = new PdfPCell(new Paragraph("Fecha factura", f3));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableFacturas.addCell(cell);
-				cell = new PdfPCell(new Paragraph("Días",f3));
+				cell = new PdfPCell(new Paragraph("Días", f3));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableFacturas.addCell(cell);
-				cell = new PdfPCell(new Paragraph("Número factura",f3));
+				cell = new PdfPCell(new Paragraph("Número factura", f3));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableFacturas.addCell(cell);
-				cell = new PdfPCell(new Paragraph("Valor factura",f3));
+				cell = new PdfPCell(new Paragraph("Valor factura", f3));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableFacturas.addCell(cell);
-				cell = new PdfPCell(new Paragraph("Valor pagado",f3));
+				cell = new PdfPCell(new Paragraph("Valor pagado", f3));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableFacturas.addCell(cell);
-				cell = new PdfPCell(new Paragraph("Valor deuda",f3));
+				cell = new PdfPCell(new Paragraph("Valor deuda", f3));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableFacturas.addCell(cell);
-	            BigDecimal sumaTotal = BigDecimal.ZERO;
-	            BigDecimal sumaPagado = BigDecimal.ZERO;
-	            BigDecimal sumaDeuda = BigDecimal.ZERO;
+				BigDecimal sumaTotal = BigDecimal.ZERO;
+				BigDecimal sumaPagado = BigDecimal.ZERO;
+				BigDecimal sumaDeuda = BigDecimal.ZERO;
 				while (rs2.next()) {
 					tableFacturas.addCell("Factura");
 					tableFacturas.addCell(rs2.getString(1));
-					tableFacturas.addCell(rs2.getInt(2)+"");
+					tableFacturas.addCell(rs2.getInt(2) + "");
 					tableFacturas.addCell(rs2.getString(3));
-					tableFacturas.addCell(rs2.getBigDecimal(5)+"");
-					tableFacturas.addCell(rs2.getBigDecimal(7)+"");
-					tableFacturas.addCell(rs2.getBigDecimal(6)+"");
-					sumaTotal=sumaTotal.add(rs2.getBigDecimal(5));
-					sumaPagado=sumaPagado.add(rs2.getBigDecimal(7));
-					sumaDeuda=sumaDeuda.add(rs2.getBigDecimal(6));
+					tableFacturas.addCell(formatoImporte.format(rs2.getBigDecimal(5)) + "");
+					tableFacturas.addCell(formatoImporte.format(rs2.getBigDecimal(7)) + "");
+					tableFacturas.addCell(formatoImporte.format(rs2.getBigDecimal(6)) + "");
+					sumaTotal = sumaTotal.add(rs2.getBigDecimal(5));
+					sumaPagado = sumaPagado.add(rs2.getBigDecimal(7));
+					sumaDeuda = sumaDeuda.add(rs2.getBigDecimal(6));
 				}
-				
-				PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + sumaTotal));
+
+				PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + formatoImporte.format(sumaTotal) ));
+				celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
 				celdaSum.setColspan(8);
-	            tableFacturas.addCell(celdaSum);
-	            
-	            celdaSum = new PdfPCell(new Paragraph("Valor total pagado cliente: " + sumaPagado));
-	            celdaSum.setColspan(8);
-	            tableFacturas.addCell(celdaSum);
-	            
-	            celdaSum = new PdfPCell(new Paragraph("Valor total adeudado cliente: " + sumaDeuda));
-	            celdaSum.setColspan(8);
-	            tableFacturas.addCell(celdaSum);
+				tableFacturas.addCell(celdaSum);
+
+				celdaSum = new PdfPCell(new Paragraph("Valor total pagado cliente: " + formatoImporte.format(sumaPagado)));
+				celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
+				celdaSum.setColspan(8);
+				tableFacturas.addCell(celdaSum);
+
+				celdaSum = new PdfPCell(new Paragraph("Valor total adeudado cliente: " + formatoImporte.format(sumaDeuda)));
+				celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
+				celdaSum.setColspan(8);
+				tableFacturas.addCell(celdaSum);
 				document.add(tableFacturas);
-				paragraph = new Paragraph();
-				paragraph.add(new Phrase(Chunk.NEWLINE));
-				paragraph.add(new Phrase(Chunk.NEWLINE));
-				document.add(paragraph);
 			}
-			
+
 			paragraph = new Paragraph();
-			
+
 			paragraph.add(new Phrase("Final del documento. Reporte inicial facturas Urbanatt"));
 			document.add(paragraph);
 
@@ -712,35 +1132,34 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			File file = new File(nombreReporte);
 			Desktop.getDesktop().open(file);
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
 		} catch (DocumentException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
-		}
-		finally {
-			if(rs2 != null){
+		} finally {
+			if (rs2 != null) {
 				try {
 					rs2.close();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					 
 					e.printStackTrace();
 				}
 			}
-			if(rs!=null){
+			if (rs != null) {
 				try {
 					rs.close();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					 
 					e.printStackTrace();
 				}
 			}
@@ -760,7 +1179,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		try {
 			conexion = ConnectionUtils.getInstance().getConnectionBack();
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
+			 
 			e1.printStackTrace();
 		}
 
@@ -874,7 +1293,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				try {
 					rs.close();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					 
 					e.printStackTrace();
 				}
 		}
@@ -899,7 +1318,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			try {
 				rs.close();
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
+				 
 				e.printStackTrace();
 			}
 		}
@@ -911,10 +1330,10 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			workbook.write(file);
 			file.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
 		}
 
@@ -931,7 +1350,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		try {
 			conexion = ConnectionUtils.getInstance().getConnectionBack();
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
+			 
 			e1.printStackTrace();
 		}
 
@@ -1055,7 +1474,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				try {
 					rs.close();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					 
 					e.printStackTrace();
 				}
 		}
@@ -1080,7 +1499,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			try {
 				rs.close();
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
+				 
 				e.printStackTrace();
 			}
 		}
@@ -1092,10 +1511,10 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			workbook.write(file);
 			file.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			 
 			e.printStackTrace();
 		}
 
@@ -1137,7 +1556,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				try {
 					rs.close();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					 
 					e.printStackTrace();
 				}
 			}
@@ -1169,7 +1588,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				try {
 					rs.close();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					 
 					e.printStackTrace();
 				}
 			}

@@ -6,7 +6,7 @@ app.controller(
 					
 					$scope.mostrarEditar = false;
 					$scope.estados = [ 'Nueva', 'Pendiente', 'Pagada', 'Cancelada', 'Cerrada' , 'En abono' ];
-					$scope.reportes = [ 'Facturas', 'Productos', 'Cuentas por cobrar' ];
+					$scope.reportes = [ 'Facturas', 'Productos', 'Cuentas por cobrar','Facturas por cliente' ];
 					function Usuario() {
 					}
 					;

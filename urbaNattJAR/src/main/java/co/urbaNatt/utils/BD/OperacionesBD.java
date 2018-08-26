@@ -201,6 +201,14 @@ public class OperacionesBD {
 
 	}
 
+	
+	public String fechaStringhora(Date fecha) {
+		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		String f = format.format(fecha);
+		return f;
+
+	}
+
 	public Date fechaDateforString(String fecha) {
 		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
 		Date f = null;

@@ -12,6 +12,7 @@ public class DetalleFacturaDTO implements Serializable {
 	private Long idDetalle;
 	private Long idFactura;
 	private BigDecimal valorPagado;
+	private String numeroRecibo;
 	private String estado;
 	/**
 	 * @return the idDetalle
@@ -60,6 +61,18 @@ public class DetalleFacturaDTO implements Serializable {
 	 */
 	public void setEstado(String estado) {
 		this.estado = estado;
+	}
+	/**
+	 * @return the numeroRecibo
+	 */
+	public String getNumeroRecibo() {
+		return numeroRecibo;
+	}
+	/**
+	 * @param numeroRecibo the numeroRecibo to set
+	 */
+	public void setNumeroRecibo(String numeroRecibo) {
+		this.numeroRecibo = numeroRecibo;
 	}
 	
 	

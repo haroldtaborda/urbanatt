@@ -6,6 +6,7 @@ app.controller(
 					
 					$scope.mostrarEditar = false;
 					$scope.dias=0;
+					$scope.numeroRecibo=null;
 					$scope.estados = [ 'Nueva', 'Pendiente', 'Pagada', 'Cancelada', 'Cerrada' , 'En abono' ];
 					$scope.roles = [ 'Administrador', 'Vendedor', 'Sin rol' ];
 					$scope.tipos = [ 'CREDITO', 'CONTADO' ];
@@ -235,6 +236,7 @@ app.controller(
 									}
 									var fac={};
 									fac.valorPagado=$scope.abonoFactura;
+									fac.numeroRecibo=$scope.numeroRecibo;
 									fac.idFactura=factura.idFactura;
 									facturasSvc
 									.abonarFactura(fac)
