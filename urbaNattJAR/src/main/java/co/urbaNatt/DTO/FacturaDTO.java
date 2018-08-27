@@ -14,7 +14,7 @@ public class FacturaDTO implements Serializable {
 	private Long idFactura;
 	private String tipo;
 	private String numeroFactura;
-	private Long idCliente;
+	private String idCliente;
 	private String fechaCreacion;
 	private Date fechaFactura;
 	private BigDecimal valorDeuda;
@@ -66,13 +66,13 @@ public class FacturaDTO implements Serializable {
 	/**
 	 * @return the idCliente
 	 */
-	public Long getIdCliente() {
+	public String getIdCliente() {
 		return idCliente;
 	}
 	/**
 	 * @param idCliente the idCliente to set
 	 */
-	public void setIdCliente(Long idCliente) {
+	public void setIdCliente(String idCliente) {
 		this.idCliente = idCliente;
 	}
 	/**

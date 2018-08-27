@@ -80,6 +80,18 @@
 					
 			</div>
 			
+			<div ng-show="totalVentas">
+			
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Tipo</label> <select class="form-control"
+					ng-model="tipoFactura">
+					<option value="">Seleccione</option>
+					<option ng-repeat="e in tipos" value="{{e}}">{{e}}</option>
+				</select>
+			</div>
+					
+			</div>
+			
 			<div ng-show="producto">
 			<div class="form-group col-xs-12 col-md-6">
 				<label>Nombre reporte</label> <input type="text" class="form-control" id=""

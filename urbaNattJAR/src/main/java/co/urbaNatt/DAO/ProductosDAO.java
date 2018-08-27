@@ -130,13 +130,12 @@ public class ProductosDAO {
 					parametros);
 			rs = operacionesBD.ejecutarConsulta(inDTO);
 			while (rs.next()) {
-				int[] diferencia=operacionesBD.getDiferenciaFechas(operacionesBD.fechaDateforString(rs.getString(5)));
 				if(dias != null && dias > 0){
-				if(dias <= diferencia[0]){
+				if(dias <= rs.getInt(15)){
 					dto = new FacturaDTO();
 					dto.setIdFactura(rs.getLong(1));
 					dto.setNumeroFactura(rs.getString(2));
-					dto.setIdCliente(rs.getLong(3));
+					dto.setIdCliente(rs.getString(3));
 					dto.setValorDeuda(rs.getBigDecimal(6));
 					dto.setValorPagado(rs.getBigDecimal(7));
 					dto.setFechaCreacion(rs.getString(4));
@@ -146,7 +145,7 @@ public class ProductosDAO {
 					dto.setDescripcion(rs.getString(10));
 					dto.setNombreCliente(rs.getString(11));
 					dto.setTipo(rs.getString(12));
-					dto.setDias(diferencia[0]);
+					dto.setDias(rs.getInt(15));
 					dto.setProductos(consultarProductos(dto.getIdFactura(),conexion));
 					dto.setIdSucursal(rs.getLong(13));
 					dto.setNombreSucursal(rs.getString(14));
@@ -157,7 +156,7 @@ public class ProductosDAO {
 				dto = new FacturaDTO();
 				dto.setIdFactura(rs.getLong(1));
 				dto.setNumeroFactura(rs.getString(2));
-				dto.setIdCliente(rs.getLong(3));
+				dto.setIdCliente(rs.getString(3));
 				dto.setValorDeuda(rs.getBigDecimal(6));
 				dto.setValorPagado(rs.getBigDecimal(7));
 				dto.setFechaCreacion(rs.getString(4));
@@ -166,7 +165,7 @@ public class ProductosDAO {
 				dto.setValorFactura(rs.getBigDecimal(9));
 				dto.setDescripcion(rs.getString(10));
 				dto.setNombreCliente(rs.getString(11));
-				dto.setDias(diferencia[0]);
+				dto.setDias(rs.getInt(15));
 				dto.setTipo(rs.getString(12));
 				dto.setProductos(consultarProductos(dto.getIdFactura(), conexion));
 				dto.setNombreSucursal(rs.getString(14));

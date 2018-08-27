@@ -138,13 +138,14 @@
 					</div>
 				</div>
 			</div>
-			<div class="form-group col-xs-12 col-md-6">
-				<label>*Valor factura</label> <input type="text"
-					class="form-control" id=""  urbanatt-Currency
-					placeholder="valor de la factura"
-					ng-model="factura.valorFactura" />
+			
+<div class="form-group col-xs-12 col-md-6">
+				<label>Tipo</label> <select class="form-control"
+					ng-model="factura.tipo">
+					<option value="">Seleccione</option>
+					<option ng-repeat="e in tipos" value="{{e}}">{{e}}</option>
+				</select>
 			</div>
-
 		</div>
 		<div class="form-group col-xs-12 col-md-6" style="overflow-y: auto; height: 200px">
 			<fieldset>
@@ -164,14 +165,6 @@
 			</fieldset>
 		</div>
 
-<div class="form-group col-xs-12 col-md-6">
-				<label>Tipo</label> <select class="form-control"
-					ng-model="factura.tipo">
-					<option value="">Seleccione</option>
-					<option ng-repeat="e in tipos" value="{{e}}">{{e}}</option>
-				</select>
-			</div>
-			
 
 		<div class="form-group col-xs-12 col-md-6">
 				<label>Descripción</label> <br>

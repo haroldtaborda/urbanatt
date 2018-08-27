@@ -6,7 +6,8 @@ app.controller(
 					
 					$scope.mostrarEditar = false;
 					$scope.estados = [ 'Nueva', 'Pendiente', 'Pagada', 'Cancelada', 'Cerrada' , 'En abono' ];
-					$scope.reportes = [ 'Facturas', 'Productos', 'Cuentas por cobrar','Facturas por cliente' ];
+					$scope.reportes = [ 'Facturas', 'Productos', 'Cuentas por cobrar','Facturas por cliente', 'Total ventas' ];
+					$scope.tipos = [ 'CREDITO', 'CONTADO' ];
 					function Usuario() {
 					}
 					;
@@ -34,10 +35,17 @@ app.controller(
 						if($scope.tipoReporte == 'Facturas'){
 							$scope.factura=true;
 							$scope.producto=false;
+							$scope.totalVentas=false;
 						}
 						else if ($scope.tipoReporte == 'Productos'){
 							$scope.factura=false;
+							$scope.totalVentas=false;
 							$scope.producto=true;
+						}
+						else if ($scope.tipoReporte == 'Total ventas'){
+							$scope.totalVentas=true;
+							$scope.producto=false;
+							$scope.factura=false;
 						}
 					}
 					
@@ -57,6 +65,7 @@ app.controller(
 						datos.diasFactura=$scope.diasFactura;
 						datos.idCliente=$scope.idCliente;
 						datos.idProducto=$scope.idProducto;
+						datos.tipoFactura=$scope.tipoFactura;
 						facturasSvc.generarReporte(datos).then(function(res) {
 							var t ={};
 							t.titulo="Exito";

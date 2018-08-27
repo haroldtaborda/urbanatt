@@ -16,7 +16,7 @@ public class ReporteDTO implements Serializable {
 	private Long idProducto;
 	private String nombreReporte;
 	private String tipoReporte;
-	
+	private String tipoFactura;
 	/**
 	 * @return the fechaInicio
 	 */
@@ -100,6 +100,18 @@ public class ReporteDTO implements Serializable {
 	 */
 	public void setTipoReporte(String tipoReporte) {
 		this.tipoReporte = tipoReporte;
+	}
+	/**
+	 * @return the tipoFactura
+	 */
+	public String getTipoFactura() {
+		return tipoFactura;
+	}
+	/**
+	 * @param tipoFactura the tipoFactura to set
+	 */
+	public void setTipoFactura(String tipoFactura) {
+		this.tipoFactura = tipoFactura;
 	}
 	
 	

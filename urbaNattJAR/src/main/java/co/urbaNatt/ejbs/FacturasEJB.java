@@ -3,8 +3,6 @@
  */
 package co.urbaNatt.ejbs;
 
-import java.awt.Desktop;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -17,6 +15,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -104,6 +103,12 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			parametros.add(usuarioInDTO.getIdCliente());
 			parametros.add(operacionesBD.fechaStringPorDate(new Date()));
 			parametros.add(operacionesBD.fechaStringPorDate(usuarioInDTO.getFechaFactura()));
+			//el valor de la factura	es valor product* cantidad
+			BigDecimal valorFactura = BigDecimal.ZERO;
+			for (ProductoDTO p : usuarioInDTO.getProductos()) {
+				valorFactura=valorFactura.add(p.getValor().multiply(new BigDecimal(p.getCantidad())));
+			}
+			usuarioInDTO.setValorFactura(valorFactura);
 			// cuando se crea el valor deuda = a valro factura
 			if (usuarioInDTO.getTipo().equalsIgnoreCase("CONTADO")) {
 				parametros.add(BigDecimal.ZERO);
@@ -526,6 +531,9 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			} else if (reporteDTO.getTipoReporte().equals("Facturas por cliente")) {
 				generarReporteFacturasPorCliente(reporteDTO);
 			}
+			else if (reporteDTO.getTipoReporte().equals("Total ventas")) {
+				generarReporteVentasTotal(reporteDTO);
+			}
 		} catch (Exception e) {
 			return "Error";
 		}
@@ -533,8 +541,13 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		return MensajesConstans.REGISTRO_EXITOSO;
 	}
 
+	private void generarReporteVentasTotal(ReporteDTO reporteDTO) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	private void generarReporteFacturasPorCliente(ReporteDTO reporteDTO) {
-		NumberFormat formatoImporte = NumberFormat.getCurrencyInstance();
+		NumberFormat formatoImporte = NumberFormat.getCurrencyInstance(Locale.US);
 		// Creacion del documento con los margenes
 		Document document = new Document(PageSize.A4);
 
@@ -578,7 +591,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			}
 			Date fechaActual = new Date();
 			String fe = operacionesBD.fechaStringhoraPorDateReporte(fechaActual);
-			String nombreReporte = ruta + "\\reporteCuentasCobrar" + fe + ".pdf";
+			String nombreReporte = ruta + "\\reporteFactuasCliente" + fe + ".pdf";
 			fileOutputStream = new FileOutputStream(nombreReporte);
 			// Obtener la instancia del PdfWriter
 			PdfWriter.getInstance(document, fileOutputStream);
@@ -603,7 +616,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			// Agregar un titulo con su respectiva fuente
 			paragraph.add(new Phrase("URBANATT FUERZA Y VITALIDAD"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Dirección: Calle falsa 123"));
+			paragraph.add(new Phrase("Dirección: Calle 30A número 43_50 San Benito"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -620,7 +633,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			OperacionesBDInDTO consulta = new OperacionesBDInDTO();
 			consulta.setConexion(conexion);
 			consulta.setConsulta(
-					"select TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CORREO,DIRECCION, C.ID_CLIENTE from CLIENTES C ");
+					"select DISTINCT TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CI.NOMBRE,DIRECCION, C.ID_CLIENTE from CLIENTES C INNER JOIN CIUDADES CI ON C.CIUDAD=CI.ID ORDER BY C.NOMBRECOMPLETO");
 			rs = operacionesBD.ejecutarConsulta(consulta);
 			String tipo = "";
 					// Creacion de una tabla
@@ -637,8 +650,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						anchocolumnas[j] = .50f;
 					}
 
-					float[] anchocolumnas2 = new float[9];
-					for (int j = 0; j < 9; j++) {
+					float[] anchocolumnas2 = new float[10];
+					for (int j = 0; j <10; j++) {
 						anchocolumnas2[j] = .50f;
 					}
 					
@@ -669,7 +682,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						cell = new PdfPCell(new Paragraph("Telefonos", f4));
 						cell.setBackgroundColor(new BaseColor(211, 216, 205));
 						table.addCell(cell);
-						cell = new PdfPCell(new Paragraph("Correo", f4));
+						cell = new PdfPCell(new Paragraph("Ciudad", f4));
 						cell.setBackgroundColor(new BaseColor(211, 216, 205));
 						table.addCell(cell);
 						cell = new PdfPCell(new Paragraph("Dirección", f4));
@@ -694,7 +707,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						document.add(table);
 						parametros.add(rs.getString(2));
 						consulta = new OperacionesBDInDTO(
-								"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO,FECHA_PAGO_TOTAL,ID_FACTURA from FACTURAS WHERE ID_CLIENTE= ?",
+								"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO,FECHA_PAGO_TOTAL,ID_FACTURA, S.NOMBRESUCURSAL from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?",
 								conexion, parametros);
 						rs2 = operacionesBD.ejecutarConsulta(consulta);
 						consulta = new OperacionesBDInDTO(
@@ -710,6 +723,9 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						document.add(paragraph);
 
 						cell = new PdfPCell(new Paragraph("Operación", f3));
+						cell.setBackgroundColor(new BaseColor(211, 216, 205));
+						tableFacturas.addCell(cell);
+						cell = new PdfPCell(new Paragraph("Sucursal", f3));
 						cell.setBackgroundColor(new BaseColor(211, 216, 205));
 						tableFacturas.addCell(cell);
 						cell = new PdfPCell(new Paragraph("Fecha factura", f3));
@@ -748,8 +764,18 @@ public class FacturasEJB implements IFacturasEJBLocal {
 							if(rs4.next()){
 								cantidad=rs4.getInt(1);
 							}
+							if (rs4 != null) {
+								try {
+									rs4.close();
+								} catch (SQLException e) {
+									 
+									e.printStackTrace();
+								}
+							}
 							if(rs2.getBigDecimal(6).compareTo(BigDecimal.ZERO) > 0){
 								cell = new PdfPCell(new Paragraph("Factura", fontDeudas));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getString(10), fontDeudas));
 								tableFacturas.addCell(cell);
 								cell = new PdfPCell(new Paragraph(rs2.getString(1), fontDeudas));
 								tableFacturas.addCell(cell);
@@ -770,6 +796,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 							}
 							else{
 								cell = new PdfPCell(new Paragraph("Factura", fontNormal));
+								tableFacturas.addCell(cell);
+								cell = new PdfPCell(new Paragraph(rs2.getString(10), fontNormal));
 								tableFacturas.addCell(cell);
 								cell = new PdfPCell(new Paragraph(rs2.getString(1), fontNormal));
 								tableFacturas.addCell(cell);
@@ -794,20 +822,28 @@ public class FacturasEJB implements IFacturasEJBLocal {
 							
 							
 						}
+						if (rs2 != null) {
+							try {
+								rs2.close();
+							} catch (SQLException e) {
+								 
+								e.printStackTrace();
+							}
+						}
 
 						PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + formatoImporte.format(sumaTotal),fontNormal));
 						celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
-						celdaSum.setColspan(9);
+						celdaSum.setColspan(10);
 						tableFacturas.addCell(celdaSum);
 
 						celdaSum = new PdfPCell(new Paragraph("Valor total pagado cliente: " + formatoImporte.format(sumaPagado),fontNormal));
 						celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
-						celdaSum.setColspan(9);
+						celdaSum.setColspan(10);
 						tableFacturas.addCell(celdaSum);
 
 						celdaSum = new PdfPCell(new Paragraph("Valor total adeudado cliente: " + formatoImporte.format(sumaDeuda),fontNormal));
 						celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
-						celdaSum.setColspan(9);
+						celdaSum.setColspan(10);
 						tableFacturas.addCell(celdaSum);
 						document.add(tableFacturas);
 						
@@ -846,6 +882,14 @@ public class FacturasEJB implements IFacturasEJBLocal {
 								cell = new PdfPCell(new Paragraph(formatoImporte.format(rs5.getBigDecimal(4))+"", fontNormal));
 								tableAbonos.addCell(cell);
 						}
+						if (rs5!= null) {
+							try {
+								rs5.close();
+							} catch (SQLException e) {
+								 
+								e.printStackTrace();
+							}
+						}
 						
 						document.add(tableAbonos);
 					}
@@ -859,9 +903,6 @@ public class FacturasEJB implements IFacturasEJBLocal {
 
 					// Cerrar el documento
 					document.close();
-					// Abrir el archivo
-					File file = new File(nombreReporte);
-					Desktop.getDesktop().open(file);
 				} catch (FileNotFoundException e) {
 					 
 					e.printStackTrace();
@@ -878,22 +919,6 @@ public class FacturasEJB implements IFacturasEJBLocal {
 					 
 					e.printStackTrace();
 				} finally {
-					if (rs4 != null) {
-						try {
-							rs4.close();
-						} catch (SQLException e) {
-							 
-							e.printStackTrace();
-						}
-					}
-					if (rs2 != null) {
-						try {
-							rs2.close();
-						} catch (SQLException e) {
-							 
-							e.printStackTrace();
-						}
-					}
 					if (rs != null) {
 						try {
 							rs.close();
@@ -908,7 +933,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 	}
 
 	private void generarReporteCuentasCobrar(ReporteDTO reporteDTO) {
-		NumberFormat formatoImporte = NumberFormat.getCurrencyInstance();
+		int contadorTotalFacturas=0;
+		NumberFormat formatoImporte = NumberFormat.getCurrencyInstance(Locale.US);
 		// Creacion del documento con los margenes
 		Document document = new Document(PageSize.A4);
 
@@ -975,7 +1001,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			// Agregar un titulo con su respectiva fuente
 			paragraph.add(new Phrase("URBANATT FUERZA Y VITALIDAD"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Dirección: Calle falsa 123"));
+			paragraph.add(new Phrase("Dirección: Calle 30A número 43_50 San Benito"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -992,7 +1018,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			OperacionesBDInDTO consulta = new OperacionesBDInDTO();
 			consulta.setConexion(conexion);
 			consulta.setConsulta(
-					"select TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CORREO,DIRECCION, C.ID_CLIENTE from CLIENTES C WHERE C.NUMID IN (SELECT F.ID_CLIENTE FROM FACTURAS F WHERE f.valor_deuda > 0)");
+					"select DISTINCT TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CI.NOMBRE,DIRECCION, C.ID_CLIENTE from CLIENTES C INNER JOIN CIUDADES CI ON C.CIUDAD=CI.ID WHERE C.NUMID IN (SELECT F.ID_CLIENTE FROM FACTURAS F WHERE f.valor_deuda > 0 AND F.TIPO ='CREDITO') ORDER BY C.NOMBRECOMPLETO");
 			rs = operacionesBD.ejecutarConsulta(consulta);
 			String tipo = "";
 			// Creacion de una tabla
@@ -1005,8 +1031,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				anchocolumnas[j] = .50f;
 			}
 
-			float[] anchocolumnas2 = new float[7];
-			for (int j = 0; j < 7; j++) {
+			float[] anchocolumnas2 = new float[8];
+			for (int j = 0; j < 8; j++) {
 				anchocolumnas2[j] = .50f;
 			}
 				
@@ -1031,8 +1057,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				cell = new PdfPCell(new Paragraph("Telefonos", f4));
 				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				table.addCell(cell);
-				cell = new PdfPCell(new Paragraph("Correo", f4));
-				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				cell = new PdfPCell(new Paragraph("Ciudad", f4));
+				cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				table.addCell(cell);
 				cell = new PdfPCell(new Paragraph("Dirección", f4));
 				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
@@ -1055,7 +1081,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				document.add(table);
 				parametros.add(rs.getString(2));
 				consulta = new OperacionesBDInDTO(
-						"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO from FACTURAS WHERE ID_CLIENTE= ?",
+						"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO, NOMBRESUCURSAL from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?  AND VALOR_DEUDA > 0 ",
 						conexion, parametros);
 				rs2 = operacionesBD.ejecutarConsulta(consulta);
 
@@ -1068,6 +1094,9 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				document.add(paragraph);
 
 				cell = new PdfPCell(new Paragraph("Operación", f3));
+				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				tableFacturas.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Sucursal", f3));
 				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableFacturas.addCell(cell);
 				cell = new PdfPCell(new Paragraph("Fecha factura", f3));
@@ -1092,7 +1121,9 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				BigDecimal sumaPagado = BigDecimal.ZERO;
 				BigDecimal sumaDeuda = BigDecimal.ZERO;
 				while (rs2.next()) {
+					contadorTotalFacturas++;
 					tableFacturas.addCell("Factura");
+					tableFacturas.addCell(rs2.getString(8));
 					tableFacturas.addCell(rs2.getString(1));
 					tableFacturas.addCell(rs2.getInt(2) + "");
 					tableFacturas.addCell(rs2.getString(3));
@@ -1102,6 +1133,14 @@ public class FacturasEJB implements IFacturasEJBLocal {
 					sumaTotal = sumaTotal.add(rs2.getBigDecimal(5));
 					sumaPagado = sumaPagado.add(rs2.getBigDecimal(7));
 					sumaDeuda = sumaDeuda.add(rs2.getBigDecimal(6));
+				}
+				if (rs2 != null) {
+					try {
+						rs2.close();
+					} catch (SQLException e) {
+						 
+						e.printStackTrace();
+					}
 				}
 
 				PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + formatoImporte.format(sumaTotal) ));
@@ -1122,15 +1161,13 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			}
 
 			paragraph = new Paragraph();
-
+			paragraph.add(new Phrase("Total de facturas: "+ contadorTotalFacturas));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Final del documento. Reporte inicial facturas Urbanatt"));
 			document.add(paragraph);
 
 			// Cerrar el documento
 			document.close();
-			// Abrir el archivo
-			File file = new File(nombreReporte);
-			Desktop.getDesktop().open(file);
 		} catch (FileNotFoundException e) {
 			 
 			e.printStackTrace();
@@ -1147,14 +1184,6 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			 
 			e.printStackTrace();
 		} finally {
-			if (rs2 != null) {
-				try {
-					rs2.close();
-				} catch (SQLException e) {
-					 
-					e.printStackTrace();
-				}
-			}
 			if (rs != null) {
 				try {
 					rs.close();
@@ -1174,7 +1203,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		workbook.setSheetName(0, "Hoja excel");
 
 		String[] headers = new String[] { "Número factura", "Nombre cliente", "Valor factura", "Valor pagado",
-				"Valor deuda", "Fecha factura", "Días por factura", "Detalle productos" };
+				"Valor deuda", "Fecha factura", "Días por factura", "Detalle productos", "Ciudad", "Sucursal" };
 		Connection conexion = null;
 		try {
 			conexion = ConnectionUtils.getInstance().getConnectionBack();
@@ -1189,8 +1218,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			StringBuilder consulta = new StringBuilder();
 			List<Object> parametros = new ArrayList<>();
 			consulta.append(
-					"select DISTINCT F.NUMERO_FACTURA, C.NOMBRECOMPLETO, F.VALOR_FACTURA, F.VALOR_PAGADO, F.VALOR_DEUDA, F.FECHA_FACTURA,sysdate-TO_DATE(F.FECHA_FACTURA, 'dd/MM/yy')  AS DIAS, F.ID_FACTURA from FACTURAS F "
-							+ " INNER JOIN CLIENTES C ON F.ID_CLIENTE=C.NUMID "
+					"select DISTINCT F.NUMERO_FACTURA, C.NOMBRECOMPLETO, F.VALOR_FACTURA, F.VALOR_PAGADO, F.VALOR_DEUDA, F.FECHA_FACTURA,sysdate-TO_DATE(F.FECHA_FACTURA, 'dd/MM/yy')  AS DIAS, F.ID_FACTURA,CI.NOMBRE,S.NOMBRESUCURSAL from FACTURAS F "
+							+ " INNER JOIN CLIENTES C ON F.ID_CLIENTE=C.NUMID  INNER JOIN CIUDADES CI ON C.CIUDAD=CI.ID LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=F.ID_SUCURSAL"
 							+ " INNER JOIN FACTURA_PRODUCTO FP ON FP.ID_FACTURA=F.ID_FACTURA INNER JOIN PRODUCTOS P ON P.ID_PRODUCTO=FP.ID_PRODUCTO WHERE F.ID_FACTURA IS NOT NULL ");
 			if (reporteDTO.getDiasFactura() != null && reporteDTO.getDiasFactura() > 0) {
 				consulta.append(" AND sysdate-TO_DATE(F.FECHA_FACTURA, 'dd/MM/yy') >= ? ");
@@ -1216,7 +1245,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			Object[] a = null;
 			while (rs.next()) {
 				contador++;
-				a = new Object[8];
+				a = new Object[10];
 				a[0] = rs.getString(1);
 				a[1] = rs.getString(2);
 				a[2] = rs.getBigDecimal(3);
@@ -1225,12 +1254,14 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				a[5] = rs.getString(6);
 				a[6] = rs.getInt(7);
 				a[7] = consultarDetalles(rs.getLong(8), conexion);
+				a[8] = rs.getString(9);
+				a[9] = rs.getString(10);
 				lista.add(a);
 			}
 
 			Object[][] data = new Object[contador][];
 			for (int i = 0; i < lista.size(); i++) {
-				data[i] = new Object[8];
+				data[i] = new Object[10];
 				data[i][0] = lista.get(i)[0];
 				data[i][1] = lista.get(i)[1];
 				data[i][2] = lista.get(i)[2];
@@ -1239,6 +1270,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				data[i][5] = lista.get(i)[5];
 				data[i][6] = lista.get(i)[6];
 				data[i][7] = lista.get(i)[7];
+				data[i][8] = lista.get(i)[8];
+				data[i][9] = lista.get(i)[9];
 			}
 
 			CellStyle headerStyle = workbook.createCellStyle();
@@ -1270,6 +1303,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				String fecha = (String) d[5];
 				Integer dias = (Integer) d[6];
 				String resumen = (String) d[7];
+				String ciudad = (String) d[8];
+				String sucursal = (String) d[9];
 				dataRow.createCell(0).setCellValue(numFac);
 				dataRow.createCell(1).setCellValue(nonmbre);
 				dataRow.createCell(2).setCellValue(valFac.doubleValue());
@@ -1278,6 +1313,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				dataRow.createCell(5).setCellValue(fecha);
 				dataRow.createCell(6).setCellValue(dias);
 				dataRow.createCell(7).setCellValue(resumen);
+				dataRow.createCell(8).setCellValue(ciudad);
+				dataRow.createCell(9).setCellValue(sucursal);
 			}
 
 			// HSSFRow dataRow = sheet.createRow(1 + data.length);
