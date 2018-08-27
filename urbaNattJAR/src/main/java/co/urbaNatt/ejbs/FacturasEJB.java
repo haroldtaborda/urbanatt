@@ -733,7 +733,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						document.add(table);
 						parametros.add(object[1].toString());
 						consulta = new OperacionesBDInDTO(
-								"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO,FECHA_PAGO_TOTAL,ID_FACTURA, S.NOMBRESUCURSAL from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?",
+								"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO,FECHA_PAGO_TOTAL,ID_FACTURA, S.NOMBRESUCURSAL,(select COUNT(D.ID_DETALLE) FROM DETALLE_FACTURA D WHERE D.ID_FACTURA=F.ID_FACTURA)  from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?",
 								conexion, parametros);
 						rs2 = operacionesBD.ejecutarConsulta(consulta);
 						consulta = new OperacionesBDInDTO(
@@ -781,24 +781,9 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						BigDecimal sumaTotal = BigDecimal.ZERO;
 						BigDecimal sumaPagado = BigDecimal.ZERO;
 						BigDecimal sumaDeuda = BigDecimal.ZERO;
-						int cantidad=0;
 						while (rs2.next()) {
 							cantidadFacturas++;
-							parametros= new ArrayList<>();
-							parametros.add(rs2.getLong(9));
-							consulta= new OperacionesBDInDTO("select COUNT(D.ID_DETALLE) FROM DETALLE_FACTURA D WHERE D.ID_FACTURA= ?",conexion,parametros);
-							rs4=operacionesBD.ejecutarConsulta(consulta);
-							if(rs4.next()){
-								cantidad=rs4.getInt(1);
-							}
-							if (rs4 != null) {
-								try {
-									rs4.close();
-								} catch (SQLException e) {
-									 
-									e.printStackTrace();
-								}
-							}
+							
 							if(rs2.getBigDecimal(6).compareTo(BigDecimal.ZERO) > 0){
 								cell = new PdfPCell(new Paragraph("Factura", fontDeudas));
 								tableFacturas.addCell(cell);
@@ -818,7 +803,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 								tableFacturas.addCell(cell);
 								cell = new PdfPCell(new Paragraph(rs2.getString(8), fontDeudas));
 								tableFacturas.addCell(cell);
-								cell = new PdfPCell(new Paragraph(cantidad+"", fontDeudas));
+								cell = new PdfPCell(new Paragraph(rs2.getInt(11)+"", fontDeudas));
 								tableFacturas.addCell(cell);
 							}
 							else{
@@ -840,7 +825,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 								tableFacturas.addCell(cell);
 								cell = new PdfPCell(new Paragraph(rs2.getString(8), fontNormal));
 								tableFacturas.addCell(cell);
-								cell = new PdfPCell(new Paragraph(cantidad+"", fontDeudas));
+								cell = new PdfPCell(new Paragraph(rs2.getInt(11)+"", fontNormal));
 								tableFacturas.addCell(cell);
 							}
 							sumaTotal = sumaTotal.add(rs2.getBigDecimal(5));
