@@ -54,6 +54,7 @@ public class OperacionesBD {
 					} else if (object instanceof Long) {
 						statement.setLong(++cont, Long.parseLong(object.toString()));
 					}
+					
 				}
 			}
 			return statement.executeUpdate();

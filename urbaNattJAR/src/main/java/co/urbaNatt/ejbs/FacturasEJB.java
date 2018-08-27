@@ -358,15 +358,17 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				parametros.add(valorDeuda);
 				parametros.add(valorPagado);
 				parametros.add(estado);
-				parametros.add(detalleFacturaDTO.getIdFactura());
 				String fechaA = operacionesBD.fechaStringPorDate(new Date());
+				String query="";
 				if (estado == EstadoFacturasEnum.PAGADA.getEstado()) {
 					parametros.add(fechaA);
+					query="UPDATE FACTURAS SET VALOR_DEUDA = ?, VALOR_PAGADO= ? , ESTADO = ?, FECHA_PAGO_TOTAL= ? WHERE ID_FACTURA= ?";
 				} else {
-					parametros.add(null);
+					query="UPDATE FACTURAS SET VALOR_DEUDA = ?, VALOR_PAGADO= ? , ESTADO = ? WHERE ID_FACTURA= ?";
 				}
+				parametros.add(detalleFacturaDTO.getIdFactura());
 				OperacionesBDInDTO ejecutarInDTO = new OperacionesBDInDTO(
-						"UPDATE FACTURAS SET VALOR_DEUDA = ?, VALOR_PAGADO= ? , ESTADO = ?, FECHA_PAGO_TOTAL= ? WHERE ID_FACTURA= ?",
+						query,
 						conexion, parametros);
 				// se hace el update de factura
 				Integer resultado = operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
@@ -547,6 +549,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 	}
 
 	private void generarReporteFacturasPorCliente(ReporteDTO reporteDTO) {
+		
+		int cantidadFacturas= 0;
 		NumberFormat formatoImporte = NumberFormat.getCurrencyInstance(Locale.US);
 		// Creacion del documento con los margenes
 		Document document = new Document(PageSize.A4);
@@ -660,8 +664,30 @@ public class FacturasEJB implements IFacturasEJBLocal {
 					for (int j = 0; j < 5; j++) {
 						anchocolumnas3[j] = .50f;
 					}
-					
+					List<Object[]> lista = new ArrayList<Object[]>();
+					Object[] ob= new Object[6];
 					while (rs.next()) {
+						 ob= new Object[6];
+						 ob[0]=rs.getLong(1)+"";
+						 ob[1]=rs.getString(2);
+						 ob[2]=rs.getString(3);
+						 ob[3]=rs.getLong(4) + "-" + rs.getLong(5);
+						 ob[4]=rs.getString(6);
+						 ob[5]=rs.getString(7);
+						 lista.add(ob);
+
+					}
+					if (rs != null) {
+						try {
+							rs.close();
+						} catch (SQLException e) {
+							 
+							e.printStackTrace();
+						}
+					}
+					
+					
+				for (Object[] object : lista) {
 						paragraph = new Paragraph();
 						paragraph.add(new Phrase(Chunk.NEWLINE));
 						paragraph.add(new Phrase("Cliente"));
@@ -691,21 +717,21 @@ public class FacturasEJB implements IFacturasEJBLocal {
 
 						PdfPTable tableFacturas = new PdfPTable(anchocolumnas2);
 						PdfPTable tableAbonos = new PdfPTable(anchocolumnas3);
-						if (rs.getLong(1) == 2) {
+						if (object[0].toString().equals("2")) {
 							tipo = "Cédula ciudadania";
-						} else if (rs.getLong(1) == 4) {
+						} else if (object[0].toString().equals("4")) {
 							tipo = "NIT";
 						}
 
 						table.addCell(tipo);
-						table.addCell(rs.getString(2) + "");
-						table.addCell(rs.getString(3));
-						table.addCell(rs.getLong(4) + "-" + rs.getLong(5));
-						table.addCell(rs.getString(6));
-						table.addCell(rs.getString(7));
+						table.addCell(object[1].toString());
+						table.addCell(object[2].toString());
+						table.addCell(object[3].toString());
+						table.addCell(object[4].toString());
+						table.addCell(object[5].toString());
 
 						document.add(table);
-						parametros.add(rs.getString(2));
+						parametros.add(object[1].toString());
 						consulta = new OperacionesBDInDTO(
 								"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO,FECHA_PAGO_TOTAL,ID_FACTURA, S.NOMBRESUCURSAL from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?",
 								conexion, parametros);
@@ -757,6 +783,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						BigDecimal sumaDeuda = BigDecimal.ZERO;
 						int cantidad=0;
 						while (rs2.next()) {
+							cantidadFacturas++;
 							parametros= new ArrayList<>();
 							parametros.add(rs2.getLong(9));
 							consulta= new OperacionesBDInDTO("select COUNT(D.ID_DETALLE) FROM DETALLE_FACTURA D WHERE D.ID_FACTURA= ?",conexion,parametros);
@@ -897,7 +924,9 @@ public class FacturasEJB implements IFacturasEJBLocal {
 					
 					
 					paragraph = new Paragraph();
-
+					
+					paragraph.add(new Phrase("Cantidad total de facturas: "+cantidadFacturas));
+					paragraph.add(new Phrase(Chunk.NEWLINE));
 					paragraph.add(new Phrase("Final del documento. Reporte total facturas por cliente Urbanatt"));
 					document.add(paragraph);
 
@@ -919,14 +948,6 @@ public class FacturasEJB implements IFacturasEJBLocal {
 					 
 					e.printStackTrace();
 				} finally {
-					if (rs != null) {
-						try {
-							rs.close();
-						} catch (SQLException e) {
-							 
-							e.printStackTrace();
-						}
-					}
 					operacionesBD.cerrarStatement();
 				}
 		
