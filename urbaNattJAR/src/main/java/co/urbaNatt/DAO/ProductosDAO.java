@@ -84,7 +84,6 @@ public class ProductosDAO {
 				dto.setUnidadMedidad(rs.getString(4));
 				dto.setCantidad(rs.getLong(6));
 				dto.setPeso(rs.getString(7));
-				dto.setValor(rs.getBigDecimal(8));
 				lista.add(dto);
 			}
 		} catch (Exception e) {

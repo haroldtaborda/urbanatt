@@ -7,7 +7,8 @@ app.controller(
 					$scope.mostrarEditar = false;
 					$scope.estados = [ 'Nueva', 'Pendiente', 'Pagada', 'Cancelada', 'Cerrada' , 'En abono' ];
 					$scope.reportes = [ 'Facturas', 'Productos', 'Cuentas por cobrar','Facturas por cliente', 'Total ventas' ];
-					$scope.tipos = [ 'CREDITO', 'CONTADO' ];
+					$scope.tipos = [ 'Mes', 'Año' ];
+					$scope.meses = [ 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Nomviembre', 'Diciembre' ];
 					function Usuario() {
 					}
 					;
@@ -66,6 +67,8 @@ app.controller(
 						datos.idCliente=$scope.idCliente;
 						datos.idProducto=$scope.idProducto;
 						datos.tipoFactura=$scope.tipoFactura;
+						datos.mes=$scope.mes;
+						datos.fecha=new Date($scope.fecha);
 						facturasSvc.generarReporte(datos).then(function(res) {
 							var t ={};
 							t.titulo="Exito";

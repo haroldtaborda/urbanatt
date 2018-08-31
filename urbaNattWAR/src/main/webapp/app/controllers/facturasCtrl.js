@@ -94,6 +94,17 @@ app.controller(
 						});
 						
 					}
+					$scope.valorTotalFactura=0;
+					$scope.sumarTotalFactura=function(){
+						$scope.valorTotalFactura=0;
+						for (var i = 0; i < $scope.productos.length; i++) {
+							if($scope.productos[i].cantidad && $scope.productos[i].cantidad > 0){
+								$scope.productos[i].valor = $scope.productos[i].valor == null ? 0 : $scope.productos[i].valor;
+								$scope.valorTotalFactura=($scope.valorTotalFactura+($scope.productos[i].cantidad*$scope.productos[i].valor));
+							}
+						}
+						
+					}
 					
 					$scope.eliminarUsuario = function(usuario) {
 						facturasSvc
@@ -208,6 +219,7 @@ app.controller(
 					}
 					
 					$scope.cancelar = function() {
+						$scope.valorTotalFactura=0;
 						$scope.mostrarTabla = true;
 						$scope.factura = new Usuario();
 					}
@@ -238,6 +250,7 @@ app.controller(
 									fac.valorPagado=$scope.abonoFactura;
 									fac.numeroRecibo=$scope.numeroRecibo;
 									fac.idFactura=factura.idFactura;
+									fac.numeroFactura=factura.numeroFactura;
 									facturasSvc
 									.abonarFactura(fac)
 									.then(
@@ -366,6 +379,7 @@ app.controller(
 							}
 						}
 						$scope.factura.productos=$scope.productosFactura;
+						$scope.factura.valorFactura=$scope.valorTotalFactura;
 						facturasSvc
 								.crearFactura($scope.factura)
 								.then(
@@ -397,6 +411,7 @@ app.controller(
 					}
 
 					$scope.abrirAgregarUsuario = function() {
+						$scope.valorTotalFactura=0;
 						$scope.mostrarTabla = false;
 						$scope.factura = new Usuario();
 						consultarProductos();

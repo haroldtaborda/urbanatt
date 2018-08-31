@@ -14,6 +14,7 @@ public class DetalleFacturaDTO implements Serializable {
 	private BigDecimal valorPagado;
 	private String numeroRecibo;
 	private String estado;
+	private String numeroFactura;
 	/**
 	 * @return the idDetalle
 	 */
@@ -73,6 +74,18 @@ public class DetalleFacturaDTO implements Serializable {
 	 */
 	public void setNumeroRecibo(String numeroRecibo) {
 		this.numeroRecibo = numeroRecibo;
+	}
+	/**
+	 * @return the numeroFactura
+	 */
+	public String getNumeroFactura() {
+		return numeroFactura;
+	}
+	/**
+	 * @param numeroFactura the numeroFactura to set
+	 */
+	public void setNumeroFactura(String numeroFactura) {
+		this.numeroFactura = numeroFactura;
 	}
 	
 	
