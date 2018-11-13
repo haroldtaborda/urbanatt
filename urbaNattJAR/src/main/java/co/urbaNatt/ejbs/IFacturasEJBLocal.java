@@ -28,6 +28,8 @@ public interface IFacturasEJBLocal {
 	public String generarReporte(ReporteDTO reporteDTO) throws TechnicalException, BusinessException;
 	
 	public String cambiarEstadoFactura(FacturaDTO usuarioInDTO) throws TechnicalException, BusinessException;
-	
+	public List<DetalleFacturaDTO> consultarAbonos(Long numeroFactura) throws TechnicalException, BusinessException;
+	public String modificarAbono(DetalleFacturaDTO usuarioInDTO)  throws TechnicalException, BusinessException;
+	public String eliminarAbono(DetalleFacturaDTO usuarioInDTO)  throws TechnicalException, BusinessException;
 	
 }

@@ -139,6 +139,58 @@ public class FacturasServices {
 					.build();
 		}
 	}
+	@SuppressWarnings("unchecked")
+	@POST
+	@Path("/modificarAbono")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response modificarAbono(DetalleFacturaDTO usuarioInDTO) {
+		JSONObject response = new JSONObject();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			String res = ejb.modificarAbono(usuarioInDTO);
+			response.put("resultado", res);
+			response.put("responseResult", ResponseUtilities.getResponse(true, null));
+			return Response.status(200).entity(response).header("Access-Control-Allow-Origin", "*").build();
+		} catch (NamingException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (TechnicalException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (BusinessException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		}
+	}
+	@SuppressWarnings("unchecked")
+	@POST
+	@Path("/eliminarAbono")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response eliminarAbono(DetalleFacturaDTO usuarioInDTO) {
+		JSONObject response = new JSONObject();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			String res = ejb.eliminarAbono(usuarioInDTO);
+			response.put("resultado", res);
+			response.put("responseResult", ResponseUtilities.getResponse(true, null));
+			return Response.status(200).entity(response).header("Access-Control-Allow-Origin", "*").build();
+		} catch (NamingException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (TechnicalException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (BusinessException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		}
+	}
 	
 	
 	@SuppressWarnings("unchecked")
@@ -181,6 +233,40 @@ public class FacturasServices {
 		try {
 			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
 			usuarios = ejb.consultasFacturas(numeroFactura, estado, numeroId, dias);
+			Response response = Response.status(200).entity(usuarios).header("Access-Control-Allow-Origin", "*").build();
+
+			return response;
+
+		} catch (TechnicalException e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(401).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		} catch (BusinessException e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(401).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		}
+
+		catch (Exception e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		}
+
+	}
+	
+	@SuppressWarnings("unchecked")
+	@GET
+	@Path("/consultarAbonos/{numeroFactura}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response consultarAbonos(
+			@PathParam("numeroFactura") Long idFactura) {
+
+		JSONObject json = null;
+		List<DetalleFacturaDTO> usuarios = new ArrayList<DetalleFacturaDTO>();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			usuarios = ejb.consultarAbonos(idFactura);
 			Response response = Response.status(200).entity(usuarios).header("Access-Control-Allow-Origin", "*").build();
 
 			return response;

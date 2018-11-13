@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import co.urbaNatt.DTO.DetalleFacturaDTO;
 import co.urbaNatt.DTO.FacturaDTO;
 import co.urbaNatt.DTO.OperacionesBDInDTO;
 import co.urbaNatt.DTO.ProductoDTO;
@@ -219,6 +220,43 @@ public class ProductosDAO {
 			operacionesBD.cerrarStatement();
 		}
 		
+		return lista;
+	}
+
+
+	public List<DetalleFacturaDTO> consultarAbonos(Long idFactura, Connection conexion)  throws TechnicalException {
+		 List<DetalleFacturaDTO> lista = new ArrayList<DetalleFacturaDTO>();
+		 DetalleFacturaDTO dto = null;
+		ResultSet rs = null;
+		try {
+			List<Object> parametros = new ArrayList<Object>();
+			StringBuilder sb = new StringBuilder();
+				sb.append(ConsultasDinamicasConstans.CONSULTAR_ABONOS_FROM);
+				parametros.add(idFactura);
+			OperacionesBDInDTO inDTO = new OperacionesBDInDTO(sb.toString(), conexion,
+					parametros);
+			rs = operacionesBD.ejecutarConsulta(inDTO);
+			while (rs.next()) {
+				dto = new DetalleFacturaDTO();
+				dto.setNumeroFactura(rs.getString(1));
+				dto.setNumeroRecibo(rs.getString(2));
+				dto.setValorPagado(rs.getBigDecimal(3));
+				dto.setIdDetalle(rs.getLong(4));
+				dto.setIdFactura(idFactura);
+				lista.add(dto);
+			}
+		} catch (Exception e) {
+			throw new TechnicalException(e);
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
 		return lista;
 	}
 	

@@ -2190,4 +2190,276 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		}
 	}
 
+	@Override
+	public List<DetalleFacturaDTO> consultarAbonos(Long numeroFactura) throws TechnicalException, BusinessException {
+		Connection conexion = null;
+		try {
+			List<DetalleFacturaDTO> result = null;
+			ProductosDAO dao = ProductosDAO.getInstance();
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			result = dao.consultarAbonos(numeroFactura,conexion);
+			return result;
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+		}
+	}
+
+	@Override
+	public String modificarAbono(DetalleFacturaDTO detalleFacturaDTO) throws TechnicalException, BusinessException {
+
+		InsertsBDInDTO insertsBDInDTO = new InsertsBDInDTO();
+		Connection conexion = null;
+		try {
+			String resultado = "";
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			
+			//se consulta el valor de la facturqa, tener encuenta que aca ya esta el abono anterior el q se esta modificando
+			// si el valor abonado es = al valor factura estado es = a total
+			BigDecimal valorAbonoAnterior = consultarValorAbonoPorId(detalleFacturaDTO.getIdDetalle(), conexion);
+			actualizarValorFacturaPorAbono(detalleFacturaDTO,valorAbonoAnterior,conexion);
+			
+			BigDecimal valorFactura = consultarValorFactura(detalleFacturaDTO.getIdFactura(), conexion);
+			
+			//ahora si se actualiza el abono y se procede al flujo normal
+			String estado = EstadoPagosEnum.ABONO.getEstado();
+			if (valorFactura.compareTo(detalleFacturaDTO.getValorPagado()) == 0) {
+				estado = EstadoPagosEnum.PAGO_TOTAL.getEstado();
+			}
+			detalleFacturaDTO.setEstado(estado);
+			List<Object[]> ups = new ArrayList<Object[]>();
+			ups=llenarDatosDetalle(detalleFacturaDTO);
+			insertsBDInDTO.setUpdates(ups);
+			insertsBDInDTO.setFiltro(detalleFacturaDTO.getIdDetalle());
+			insertsBDInDTO.setId("ID_DETALLE");
+			insertsBDInDTO.setTabla(TablasConstans.DETALLE_FACTURA);
+			insertsBDInDTO.setConexion(conexion);
+			// se actualiza el abono
+			resultado = operacionesBD.actualizarRegistro(insertsBDInDTO);
+			// se actualizan los valores en la factura
+			actualizarValoresFactura(detalleFacturaDTO, conexion);
+			if (resultado.equals(EstadosOperaciones.EXITO.getEstado())) {
+				return MensajesConstans.REGISTRO_EXITOSO;
+			} else {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			}
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+		}
+	}
+
+	private List<Object[]> llenarDatosDetalle(DetalleFacturaDTO detalleFacturaDTO) {
+		List<Object[]> ups = new ArrayList<Object[]>();
+		Object[] o= new Object[2];
+		o[0]="VALOR_PAGADO";
+		o[1]=detalleFacturaDTO.getValorPagado();
+		ups.add(o);
+		
+		o= new Object[2];
+		o[0]="NUMERO_RECIBO";
+		o[1]=detalleFacturaDTO.getNumeroRecibo();
+		ups.add(o);
+		
+		o= new Object[2];
+		o[0]="ESTADO";
+		o[1]=detalleFacturaDTO.getEstado();
+		ups.add(o);
+		
+		return ups;
+	
+	}
+
+	private String actualizarValorFacturaPorAbono(DetalleFacturaDTO detalleFacturaDTO, BigDecimal valorAbonoAnterior, Connection conexion) {
+		ResultSet rs = null;
+		try {
+			BigDecimal valorDeuda = BigDecimal.ZERO;
+			BigDecimal valorPagado = BigDecimal.ZERO;
+			BigDecimal valorFactura = BigDecimal.ZERO;
+			List<Object> parametros = new ArrayList<Object>();
+			parametros.add(detalleFacturaDTO.getIdFactura());
+			OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO(
+					"SELECT VALOR_FACTURA, VALOR_DEUDA,VALOR_PAGADO FROM FACTURAS WHERE ID_FACTURA= ?", conexion,
+					parametros);
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+			String estado = EstadoFacturasEnum.EN_ABONO.getEstado();
+			if (rs.next()) {
+				valorFactura = rs.getBigDecimal(1);
+				valorDeuda = rs.getBigDecimal(2);
+				valorPagado = rs.getBigDecimal(3);
+				valorDeuda = valorDeuda.add(valorAbonoAnterior);
+				valorPagado = valorPagado.subtract(valorAbonoAnterior);
+				if (valorDeuda.compareTo(BigDecimal.ZERO) <= 0) {
+					// se cambia el estado de la factura
+					estado = EstadoFacturasEnum.PAGADA.getEstado();
+					valorDeuda = BigDecimal.ZERO;
+				}
+				if (valorPagado.compareTo(valorFactura) >= 0) {
+					// se cambia el estado de la factura
+					estado = EstadoFacturasEnum.PAGADA.getEstado();
+					valorPagado = valorFactura;
+				}
+				parametros = new ArrayList<Object>();
+				parametros.add(valorDeuda);
+				parametros.add(valorPagado);
+				parametros.add(estado);
+				String fechaA = operacionesBD.fechaStringPorDate(new Date());
+				String query="";
+				if (estado == EstadoFacturasEnum.PAGADA.getEstado()) {
+					parametros.add(fechaA);
+					query="UPDATE FACTURAS SET VALOR_DEUDA = ?, VALOR_PAGADO= ? , ESTADO = ?, FECHA_PAGO_TOTAL= ? WHERE ID_FACTURA= ?";
+				} else {
+					query="UPDATE FACTURAS SET VALOR_DEUDA = ?, VALOR_PAGADO= ? , ESTADO = ?, FECHA_PAGO_TOTAL= null WHERE ID_FACTURA= ?";
+				}
+				parametros.add(detalleFacturaDTO.getIdFactura());
+				OperacionesBDInDTO ejecutarInDTO = new OperacionesBDInDTO(
+						query,
+						conexion, parametros);
+				// se hace el update de factura
+				Integer resultado = operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+				if (resultado.compareTo(EstadosOperaciones.EXITO.getId()) == 0) {
+					return MensajesConstans.REGISTRO_EXITOSO;
+				} else {
+					ResultSecurityDTO result = new ResultSecurityDTO();
+					result.error = new Error();
+					result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+					result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+					result.result = false;
+					result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+					throw new BusinessException(result);
+				}
+			}
+		} catch (Exception e) {
+			// no se actualizaron los valores
+			System.out.println("Error");
+
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		return MensajesConstans.REGISTRO_EXITOSO;
+		
+	}
+
+	private BigDecimal consultarValorAbonoPorId(Long idDetalle, Connection conexion) {
+		ResultSet rs = null;
+		BigDecimal valorFactura = null;
+		try {
+			OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO();
+			consultasInDTO.setConexion(conexion);
+			consultasInDTO.setConsulta("select VALOR_PAGADO from DETALLE_FACTURA WHERE  ID_DETALLE= ?");
+			List<Object> parametros = new ArrayList<Object>();
+			parametros.add(idDetalle);
+			consultasInDTO.setParametros(parametros);
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+			if (rs.next()) {
+				valorFactura = rs.getBigDecimal(1);
+			}
+		} catch (Exception e) {
+			return BigDecimal.ZERO;
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		return valorFactura;
+	}
+
+	@Override
+	public String eliminarAbono(DetalleFacturaDTO detalleFacturaDTO) throws TechnicalException, BusinessException {
+		Connection conexion = null;
+		try {
+			Integer resultado;
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			
+			//se consulta el valor de la facturqa, tener encuenta que aca ya esta el abono anterior el q se esta modificando
+			// si el valor abonado es = al valor factura estado es = a total
+			BigDecimal valorAbonoAnterior = consultarValorAbonoPorId(detalleFacturaDTO.getIdDetalle(), conexion);
+			actualizarValorFacturaPorAbono(detalleFacturaDTO,valorAbonoAnterior,conexion);
+			
+			List<Object> parametros = new ArrayList<>();
+			parametros.add(detalleFacturaDTO.getIdDetalle());
+			OperacionesBDInDTO ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM DETALLE_FACTURA WHERE ID_DETALLE = ?", conexion,
+					parametros );
+			resultado = operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+		
+			if (resultado.compareTo(EstadosOperaciones.EXITO.getId()) == 0) {
+				return MensajesConstans.REGISTRO_EXITOSO;
+			} else {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			}
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+		}
+	}
+
 }

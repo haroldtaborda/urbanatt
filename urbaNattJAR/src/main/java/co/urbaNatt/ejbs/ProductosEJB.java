@@ -145,10 +145,7 @@ public class ProductosEJB implements IProductosEJBLocal {
 		o[0]="PESO";
 		o[1]=usuarioInDTO.getPeso();
 		ups.add(o);
-		o= new Object[2];
-		o[0]="VALOR";
-		o[1]=usuarioInDTO.getValor();
-		ups.add(o);
+
 		
 		return ups;
 	

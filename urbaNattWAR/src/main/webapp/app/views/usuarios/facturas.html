@@ -77,6 +77,8 @@
 						<th width="12%">
 							<a ng-click="abonarFactura(u)" ng-show="u.tipo == 'CREDITO' && u.valorDeuda > 0"><img title="Abonar a factura"
 								src="assets/img/icoActivar.png"></a>
+								<a ng-click="consultarAbonos(u)" ng-show="u.tipo == 'CREDITO'"> <img title="Abonos"
+								src="assets/img/icoConsultar.gif"></a>
 								<a ng-click="revertirFactura(u)"><img title="Revertir factura"
 								src="assets/img/icoCerrarFormulario.png"></a></th>
 					</tr>

@@ -140,6 +140,156 @@ app.controller(
 						
 					}
 					
+					$scope.consultarAbonos = function(factura) {
+						var informationAlert = $uibModal
+						.open({
+							animation : true,
+							templateUrl : "app/views/modals/consultaAbonos.html",
+							controller : function($scope) {
+								$scope.abonosTabla =[];
+								facturasSvc.consultarAbonos(factura.idFactura).then(function(res) {
+									if (res.data != null) {
+										$scope.abonosTabla = res.data;
+									} else {
+										$scope.abonosTabla = [];
+									}
+								}, function(entryError) {
+									$scope.abonosTabla = [];
+								});
+								
+								
+								$scope.modificarAbono = function(abono) {
+									modificarAbo(abono);
+									$scope.abonosTabla =[];
+									facturasSvc.consultarAbonos(factura.idFactura).then(function(res) {
+										if (res.data != null) {
+											$scope.abonosTabla = res.data;
+										} else {
+											$scope.abonosTabla = [];
+										}
+									}, function(entryError) {
+										$scope.abonosTabla = [];
+									});
+								}
+								
+								$scope.eliminarAbono = function(abono) {
+									eliminarAbon(abono);
+									$scope.abonosTabla =[];
+									facturasSvc.consultarAbonos(factura.idFactura).then(function(res) {
+										if (res.data != null) {
+											$scope.abonosTabla = res.data;
+										} else {
+											$scope.abonosTabla = [];
+										}
+									}, function(entryError) {
+										$scope.abonosTabla = [];
+									});
+								}
+								
+								$scope.cancelAbonos = function() {
+									informationAlert.close();
+									$scope.buscarUsuarios();
+								}
+								$scope.refrescarAbonos = function() {
+									$scope.abonosTabla =[];
+									facturasSvc.consultarAbonos(factura.idFactura).then(function(res) {
+										if (res.data != null) {
+											$scope.abonosTabla = res.data;
+										} else {
+											$scope.abonosTabla = [];
+										}
+									}, function(entryError) {
+										$scope.abonosTabla = [];
+									});
+								}
+							}
+						});
+					}
+					
+					function modificarAbo(abono){
+						//abrimos el modal para realizar un abono
+						var informationAlert = $uibModal
+						.open({
+							animation : true,
+							templateUrl : "app/views/modals/abonosModal.html",
+							controller : function($scope) {
+								$scope.numeroRecibo=abono.numeroFactura;
+									$scope.abonoFactura=abono.valorPagado;
+								$scope.acept = function() {
+									//abonar llamar el servicio
+									if($scope.abonoFactura == null || $scope.abonoFactura == ''){
+										var dto ={};
+										dto.titulo="Error";
+										dto.mensaje="Debe ingresar el valor a abonar";
+										mostrarMensaje(dto);
+										return;
+									}
+									abono.numeroFactura=$scope.numeroRecibo;
+									abono.valorPagado=$scope.abonoFactura;
+									facturasSvc
+							.modificarAbono(abono)
+							.then(
+									function(res) {
+										if (res.data.responseResult.result) {
+											informationAlert.close();
+											var dto ={};
+											dto.titulo="Extio";
+											dto.mensaje="Registro modificado exitosamente";
+											mostrarMensaje(dto);
+										} else {
+											informationAlert.close();
+											var dto ={};
+											dto.titulo="Extio";
+											dto.mensaje="Se presentaron errores al modificar el abono";
+											mostrarMensaje(dto);
+										}
+									},
+									function(entryError) {
+										informationAlert.close();
+										var dto ={};
+										dto.titulo="Extio";
+										dto.mensaje="Se presentaron errores al modificar el abono";
+										mostrarMensaje(dto);
+
+									});
+								}
+								$scope.cancel = function() {
+									informationAlert.close();
+									$scope.buscarUsuarios();
+								}
+							}
+						});
+						}
+					
+					function eliminarAbon(abono){
+						facturasSvc
+						.eliminarAbono(abono)
+						.then(
+								function(res) {
+									if (res.data.responseResult.result) {
+										informationAlert.close();
+										var dto ={};
+										dto.titulo="Extio";
+										dto.mensaje="Registro eliminado exitosamente";
+										mostrarMensaje(dto);
+									} else {
+										informationAlert.close();
+										var dto ={};
+										dto.titulo="Extio";
+										dto.mensaje="Se presentaron errores al eliminar el abono";
+										mostrarMensaje(dto);
+									}
+								},
+								function(entryError) {
+									informationAlert.close();
+									var dto ={};
+									dto.titulo="Extio";
+									dto.mensaje="Se presentaron errores al eliminar el abono";
+									mostrarMensaje(dto);
+
+								});
+					}
+					
 					$scope.buscarUsuarios = function() {
 						var us = new Usuario();
 						us.numeroFactura = $scope.numeroFactura == null
@@ -261,24 +411,7 @@ app.controller(
 													dto.titulo="Extio";
 													dto.mensaje="Registro almacenado exitosamente";
 													mostrarMensaje(dto);
-													var us = new Usuario();
-													us.numeroFactura = $scope.numeroFactura == null
-															|| $scope.numeroFactura == '' ? "TODOS"
-															: $scope.numeroFactura;
-													us.estado = $scope.estado == null || $scope.estado == '' ? "TODOS"
-															: $scope.estado;
-													us.numeroId = $scope.numeroId == null || $scope.numeroId == '' ? "TODOS"
-															: $scope.numeroId;
-													facturasSvc.consultasFacturas(us).then(function(res) {
-														if (res.data != null) {
-															$scope.facturasTabla = res.data;
-														} else {
-															$scope.facturasTabla = [];
-														}
-													}, function(entryError) {
-														$scope.facturasTabla = [];
-
-													});
+													$scope.buscarUsuarios();
 												} else {
 													informationAlert.close();
 													var dto ={};
@@ -298,6 +431,7 @@ app.controller(
 								}
 								$scope.cancel = function() {
 									informationAlert.close();
+									$scope.buscarUsuarios();
 								}
 							}
 						});
