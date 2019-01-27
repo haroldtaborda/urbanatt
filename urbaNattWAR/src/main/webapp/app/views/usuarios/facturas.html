@@ -29,11 +29,10 @@
 					class="form-control" id="" placeholder="# id" ng-model="numeroId" />
 
 			</div>
-			
-						<div class="form-group col-xs-12 col-md-6">
+
+			<div class="form-group col-xs-12 col-md-6">
 				<label>Días facturado</label> <input type="number"
-					class="form-control" id="" placeholder="# días"
-					ng-model="dias" />
+					class="form-control" id="" placeholder="# días" ng-model="dias" />
 
 			</div>
 			<div class="col-xs-12">
@@ -42,7 +41,8 @@
 		</div>
 	</div>
 	<div class="form-group">
-		<div class="accordion-inner" ng-show="mostrarTabla" style="overflow-y: auto;overflow-x: auto; width:1000px;height: 600px;">
+		<div class="accordion-inner" ng-show="mostrarTabla"
+			style="overflow-y: auto; overflow-x: auto; width: 1000px; height: 600px;">
 			<table class="table table-striped table-bordered custom">
 				<thead>
 					<th>#</th>
@@ -66,20 +66,21 @@
 						<td>{{$index+1}}</td>
 						<td>{{u.numeroFactura}}</td>
 						<td>{{u.nombreCliente}}</td>
-						<td>{{u.valorFactura  | currency}}</td>
+						<td>{{u.valorFactura | currency}}</td>
 						<td>{{u.valorDeuda | currency}}</td>
-						<td>{{u.valorPagado  | currency}}</td>
+						<td>{{u.valorPagado | currency}}</td>
 						<td>{{u.fechaFactura | date}}</td>
 						<td>{{u.nombreSucursal}}</td>
 						<td>{{u.dias}}</td>
 						<td>{{u.tipo}}</td>
 						<td>{{u.estado}}</td>
-						<th width="12%">
-							<a ng-click="abonarFactura(u)" ng-show="u.tipo == 'CREDITO' && u.valorDeuda > 0"><img title="Abonar a factura"
-								src="assets/img/icoActivar.png"></a>
-								<a ng-click="consultarAbonos(u)" ng-show="u.tipo == 'CREDITO'"> <img title="Abonos"
-								src="assets/img/icoConsultar.gif"></a>
-								<a ng-click="revertirFactura(u)"><img title="Revertir factura"
+						<th width="12%"><a ng-click="abonarFactura(u)"
+							ng-show="u.tipo == 'CREDITO' && u.valorDeuda > 0"><img
+								title="Abonar a factura" src="assets/img/icoActivar.png"></a>
+							<a ng-click="consultarAbonos(u)" ng-show="u.tipo == 'CREDITO'">
+								<img title="Abonos" src="assets/img/icoConsultar.gif">
+						</a> <a ng-click="revertirFactura(u)"><img
+								title="Revertir factura"
 								src="assets/img/icoCerrarFormulario.png"></a></th>
 					</tr>
 				</tbody>
@@ -103,25 +104,26 @@
 			<div class="form-group col-xs-12 col-md-6">
 				<label>*Cliente</label> <select class="form-control"
 					required="required" ng-model="factura.idCliente"
-					ng-selected="factura.idCliente==e.numId" ng-change="consultarFacturasPorCliente()">
-					<option ng-repeat="e in clientes" label="{{e.nombreCliente}}-{{e.numId}}"
-						value="{{e.numId}} ">{{e.nombreCliente}}-{{e.numId}}</option>
+					ng-selected="factura.idCliente==e.numId"
+					ng-change="consultarFacturasPorCliente()">
+					<option ng-repeat="e in clientes"
+						label="{{e.nombreCliente}}-{{e.numId}}" value="{{e.numId}} ">{{e.nombreCliente}}-{{e.numId}}</option>
 				</select>
 			</div>
 
 		</div>
-		
+
 		<div class="form-group col-xs-12 col-md-12">
 			<div class="form-group col-xs-12 col-md-6">
 				<label>*Sucursal</label> <select class="form-control"
 					required="required" ng-model="factura.idSucursal"
-					ng-selected="factura.idSucursal==e.idSucursal" >
+					ng-selected="factura.idSucursal==e.idSucursal">
 					<option ng-repeat="e in sucursales" label="{{e.nombreSucursal}}"
 						value="{{e.idSucursal}} ">{{e.nombreSucursal}}</option>
 				</select>
 			</div>
-			
-			
+
+
 			<div class="form-group col-xs-12 col-md-6">
 				<label>Tipo</label> <select class="form-control"
 					ng-model="factura.tipo">
@@ -148,60 +150,119 @@
 					</div>
 				</div>
 			</div>
-			
-        <div class="form-group col-xs-12 col-md-6">
-				<label>*Valor total</label> <input type="text"
-					disabled="disabled" class="form-control" id=""
-					placeholder="Valor total"  ng-model="valorTotalFactura" />
+
+			<div class="form-group col-xs-12 col-md-6">
+				<label>*Valor total</label> <input type="text" disabled="disabled"
+					class="form-control" id="" placeholder="Valor total"
+					ng-model="valorTotalFactura | currency" />
 
 			</div>
 		</div>
-		<div class="form-group col-xs-12 col-md-6" style="overflow-y: auto; height: 200px">
+		<div class="form-group col-xs-12 col-md-12">
 			<fieldset>
 				<legend>Productos venta</legend>
-				<span ng-repeat="pro in productos"> 
-				<div class="form-group col-xs-12 col-md-12">
-			<div class="form-group col-xs-12 col-md-5">
-				<input type="checkbox"
-					ng-click="seleccionarProducto(pro)" value="{{pro.nombreProducto}}" /> <label>
-						{{pro.nombreProducto}} </label> 
+				<div class="form-group col-xs-12 col-md-6">
+					<label>Seleccione el producto</label> <input type="text"
+					ng-show="productoVenta == null || productoVenta.nombreProducto == null"
+				 	name="productoVenta" id="productoVenta" ng-model="productoVenta"
+						ng-keyup="complete(productoVenta)" class="form-control">
+						
+					<input type="text" disabled="disabled" ng-show="productoVenta != null && productoVenta.nombreProducto != null"
+					ng-model="productoVenta.nombreProducto" class="form-control" />
+					<ul class="list-group">
+						<li class="list-group-item" ng-repeat="p in productosFiltro"
+							ng-click="fillTextbox(p)">{{p.nombreProducto}}</li>
+					</ul>
+				</div>
+				<div class="form-group col-xs-12 col-md-3">
+					<label>Cantidad</label> <input type="number" class="form-control"
+						id="" placeholder="cantidad" ng-model="productoVenta.cantidad"
+						ng-blur="sumarTotalFactura()" />
+				</div>
+				<div class="form-group col-xs-12 col-md-3">
+					<label>Valor</label>
+					<div class="input-group">
+						<input type="text" class="form-control" id="" placeholder="Valor"
+							ng-model="productoVenta.valor" ng-blur="sumarTotalFactura()" />
+						<div class="input-group-addon">
+							<a ng-click="seleccionarProducto(productoVenta)"><img
+								style="width: 20px;" src="assets/img/icoModalExito.gif"></a>
 						</div>
-						<div class="form-group col-xs-12 col-md-3">
-						<input style="width: 80px;" type="number" class="form-control"
-					id="" placeholder="cantidad" ng-model="pro.cantidad" ng-blur="sumarTotalFactura()"/>
 					</div>
-					<div class="form-group col-xs-12 col-md-4">
-						<input style="width: 80px;" type="text" class="form-control"
-					id="" placeholder="Valor" ng-model="pro.valor" ng-blur="sumarTotalFactura()" />
-					</div>
-					</div>
-				</span>
+				</div>
+
 			</fieldset>
 		</div>
-		<div class="form-group col-xs-12 col-md-6" style="overflow-y: auto; height: 200px">
-			<fieldset>
-				<legend>Productos regalo</legend>
-				<span ng-repeat="pro in productosRegaloConsulta"> 
-				<div class="form-group col-xs-12 col-md-12">
-			<div class="form-group col-xs-12 col-md-5">
-				<input type="checkbox"
-					ng-click="seleccionarProductoRegalo(pro)" value="{{pro.nombreProducto}}" /> <label>
-						{{pro.nombreProducto}} </label> 
+		<div class="form-group col-xs-12 col-md-7">
+		<div ng-show="productosFactura != null && productosFactura.length > 0"
+			style="overflow-y: auto; height: 100px;">
+		<ul class="list-group">
+						<li class="list-group-item" ng-repeat="p in productosFactura">
+						<div class="input-group">
+						<input disabled="disabled" class="form-control" value="{{p.nombreProducto}}-{{p.cantidad}}-${{p.valor}}"/>
+						<div class="input-group-addon">
+							<a ng-click="seleccionarProducto(p)"><img
+								style="width: 20px;" src="assets/img/icoModalError.gif"></a>
 						</div>
-						<div class="form-group col-xs-12 col-md-3">
-						<input style="width: 80px;" type="number" class="form-control"
-					id="" placeholder="cantidad" ng-model="pro.cantidad" />
 					</div>
 					
+					  </li>
+					</ul>
+				</div>	
+		</div>
+		
+		<div class="form-group col-xs-12 col-md-12">
+			<fieldset>
+				<legend>Productos regalo</legend>
+				<div class="form-group col-xs-12 col-md-6">
+					<label>Seleccione el producto</label> <input type="text"
+						name="productoRegalo" id="productoRegalo" ng-model="productoRegalo"
+						value="{{productoVenta.nombreProducto}}"
+						ng-keyup="completeRegalo(productoRegalo)" class="form-control" />
+						
+						
+					<ul class="list-group">
+						<li class="list-group-item" ng-repeat="p in productosRegaloFiltro"
+							ng-click="fillTextboxRegalo(p)">{{p.nombreProducto}}</li>
+					</ul>
+				</div>
+				<div class="form-group col-xs-12 col-md-3">
+					<label>Cantidad</label>
+					<div class="input-group">
+						<input type="number" class="form-control"
+						id="" placeholder="cantidad" ng-model="productoRegalo.cantidad"/>
+						<div class="input-group-addon">
+							<a ng-click="seleccionarProductoRegalo(productoRegalo)"><img
+								style="width: 20px;" src="assets/img/icoModalExito.gif"></a>
+						</div>
 					</div>
-				</span>
+				</div>
+
 			</fieldset>
+		</div>
+		
+		<div class="form-group col-xs-12 col-md-7">
+		 <div ng-show="productosRegalo != null && productosFactura.length > 0"
+			style="overflow-y: auto; height: 100px;">
+		<ul class="list-group">
+						<li class="list-group-item" ng-repeat="p in productosRegalo">
+						<div class="input-group">
+						<input disabled="disabled" class="form-control" ng-model="p.nombreProducto"/>
+						<div class="input-group-addon">
+							<a ng-click="seleccionarProductoRegalo(p)"><img
+								style="width: 20px;" src="assets/img/icoModalError.gif"></a>
+						</div>
+					</div>
+					
+					  </li>
+					</ul>
+					</div>
 		</div>
 
 
-		<div class="form-group col-xs-12 col-md-6">
-				<label>Descripción</label> <br>
-				<textarea rows="4" cols="50" ng-model="factura.descripcion" />
+		<div class="form-group col-xs-12 col-md-12">
+			<label>Descripción</label> <br>
+			<textarea rows="3" cols="50" ng-model="factura.descripcion" />
 		</div>
 
 		<div class="col-xs-12 col-sm-11">

@@ -377,6 +377,7 @@ app.controller(
 						}else {
 						productoSeleccionado.seleccionado=true;
 						$scope.productosFactura.push(productoSeleccionado);
+						$scope.productoVenta=null;
 						}
 					}
 					
@@ -389,12 +390,13 @@ app.controller(
 						}else {
 						productoSeleccionado.seleccionado=true;
 						$scope.productosRegalo.push(productoSeleccionado);
+						$scope.productoRegalo=null;
 						}
 					}
 					
 					function validarSeleccion(desc, tabla){
 						var index = tabla.indexOf(desc);
-						if(index > 0){
+						if(index >= 0){
 							return true;
 						}
 						else{
@@ -596,6 +598,37 @@ app.controller(
 											mostrarMensaje(dto);
 
 										});
+					}
+					
+					
+					$scope.complete=function(pro){
+						
+						var output=[];
+						angular.forEach($scope.productos,function(p){
+							if(p.nombreProducto.toLowerCase().indexOf(pro.toLowerCase())>=0){
+								output.push(p);
+							}
+						});
+						$scope.productosFiltro=output;
+					}
+					$scope.fillTextbox=function(string){
+						$scope.productoVenta=string;
+						$scope.productosFiltro=null;
+					}
+					
+					$scope.completeRegalo=function(pro){
+						
+						var output=[];
+						angular.forEach($scope.productosRegaloConsulta,function(p){
+							if(p.nombreProducto.toLowerCase().indexOf(pro.toLowerCase())>=0){
+								output.push(p);
+							}
+						});
+						$scope.productosRegaloFiltro=output;
+					}
+					$scope.fillTextboxRegalo=function(string){
+						$scope.productoRegalo=string;
+						$scope.productosRegaloFiltro=null;
 					}
 
 					$scope.abrirAgregarUsuario = function() {
