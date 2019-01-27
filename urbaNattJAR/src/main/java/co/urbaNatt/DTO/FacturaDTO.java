@@ -25,6 +25,8 @@ public class FacturaDTO implements Serializable {
 	private String descripcion;
 	private Integer dias;
 	private List<ProductoDTO> productos;
+	private List<ProductoDTO> productosRegalo;
+	private List<DetalleProductoDTO> detallesDTO;
 	private Long idSucursal;
 	private String nombreSucursal;
 	/**
@@ -218,6 +220,30 @@ public class FacturaDTO implements Serializable {
 	 */
 	public void setNombreSucursal(String nombreSucursal) {
 		this.nombreSucursal = nombreSucursal;
+	}
+	/**
+	 * @return the productosRegalo
+	 */
+	public List<ProductoDTO> getProductosRegalo() {
+		return productosRegalo;
+	}
+	/**
+	 * @param productosRegalo the productosRegalo to set
+	 */
+	public void setProductosRegalo(List<ProductoDTO> productosRegalo) {
+		this.productosRegalo = productosRegalo;
+	}
+	/**
+	 * @return the detallesDTO
+	 */
+	public List<DetalleProductoDTO> getDetallesDTO() {
+		return detallesDTO;
+	}
+	/**
+	 * @param detallesDTO the detallesDTO to set
+	 */
+	public void setDetallesDTO(List<DetalleProductoDTO> detallesDTO) {
+		this.detallesDTO = detallesDTO;
 	}
 
 }

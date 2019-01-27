@@ -7,13 +7,13 @@ app.controller(
 					}
 					;
 					$scope.productos="";
-					if($rootScope.facturaArevertir != null && $rootScope.facturaArevertir.productos!=null){
-						for (var i = 0; i < $rootScope.facturaArevertir.productos.length; i++) {
-							$scope.productos=$scope.productos+", "+ $rootScope.facturaArevertir.productos[i].nombreProducto
-							+"-"+$rootScope.facturaArevertir.productos[i].cantidad+" unidades";
+					if($rootScope.facturaArevertir != null && $rootScope.facturaArevertir.detallesDTO!=null){
+						for (var i = 0; i < $rootScope.facturaArevertir.detallesDTO.length; i++) {
+							$scope.productos=$scope.productos+ $rootScope.facturaArevertir.detallesDTO[i].nombreProducto
+							+"-"+$rootScope.facturaArevertir.detallesDTO[i].cantidad+" unidades"+"-$"+$rootScope.facturaArevertir.detallesDTO[i].valor
+							+"-"+$rootScope.facturaArevertir.detallesDTO[i].tipo+"\n";
 						}
 						
-						$scope.productos=$scope.productos.substring(2,$scope.productos.length);
 					}
 					
 					$scope.tipos = [ 'CREDITO', 'CONTADO' ];

@@ -250,8 +250,8 @@ public class UserAdminDAO {
 				dto= new SucursalInDTO();
 				dto.setIdSucursal(rs.getLong(1));
 				dto.setNombreSucursal(rs.getString(2));
-				dto.setDireccion(rs.getString(3));
-				dto.setTipo(rs.getString(4));
+				dto.setDireccion(rs.getString(4));
+				dto.setTipo(rs.getString(3));
 				dto.setIdDepartamento(rs.getLong(5));
 				dto.setIdCiudad(rs.getLong(6));
 				dto.setIdCliente(idCliente);

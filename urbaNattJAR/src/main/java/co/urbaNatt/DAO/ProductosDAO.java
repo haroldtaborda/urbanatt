@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import co.urbaNatt.DTO.DetalleFacturaDTO;
+import co.urbaNatt.DTO.DetalleProductoDTO;
 import co.urbaNatt.DTO.FacturaDTO;
 import co.urbaNatt.DTO.OperacionesBDInDTO;
 import co.urbaNatt.DTO.ProductoDTO;
@@ -85,6 +86,7 @@ public class ProductosDAO {
 				dto.setUnidadMedidad(rs.getString(4));
 				dto.setCantidad(rs.getLong(6));
 				dto.setPeso(rs.getString(7));
+				//dto.setValor(rs.getBigDecimal(8));
 				lista.add(dto);
 			}
 		} catch (Exception e) {
@@ -146,7 +148,7 @@ public class ProductosDAO {
 					dto.setNombreCliente(rs.getString(11));
 					dto.setTipo(rs.getString(12));
 					dto.setDias(rs.getInt(15));
-					dto.setProductos(consultarProductos(dto.getIdFactura(),conexion));
+					dto.setDetallesDTO(consultarDetallesProducto(dto.getIdFactura(),conexion));
 					dto.setIdSucursal(rs.getLong(13));
 					dto.setNombreSucursal(rs.getString(14));
 					lista.add(dto);
@@ -167,7 +169,7 @@ public class ProductosDAO {
 				dto.setNombreCliente(rs.getString(11));
 				dto.setDias(rs.getInt(15));
 				dto.setTipo(rs.getString(12));
-				dto.setProductos(consultarProductos(dto.getIdFactura(), conexion));
+				dto.setDetallesDTO(consultarDetallesProducto(dto.getIdFactura(), conexion));
 				dto.setNombreSucursal(rs.getString(14));
 				lista.add(dto);
 				}
@@ -184,6 +186,44 @@ public class ProductosDAO {
 			}
 			operacionesBD.cerrarStatement();
 		}
+		return lista;
+	}
+
+
+	private List<DetalleProductoDTO> consultarDetallesProducto(Long idFactura, Connection conexion)  throws TechnicalException {
+		DetalleProductoDTO p=null;
+		ResultSet rs=null;
+		List<DetalleProductoDTO> lista= new ArrayList<>();
+		OperacionesBDInDTO consultasInDTO= new OperacionesBDInDTO();
+		consultasInDTO.setConexion(conexion);
+		consultasInDTO.setConsulta("SELECT ID_PRODUCTO,NOMBRE_PRODUCTO,CANTIDAD,TIPO,VALOR_UNITARIO FROM FACTURA_PRODUCTO WHERE ID_FACTURA= ?");
+		List<Object> parametros= new ArrayList<>();
+		parametros.add(idFactura);
+		consultasInDTO.setParametros(parametros);
+		try{
+		rs=operacionesBD.ejecutarConsulta(consultasInDTO);
+		while(rs.next()){
+			p=new DetalleProductoDTO();
+			p.setIdProducto(rs.getLong(1));
+			p.setNombreProducto(rs.getString(2));
+			p.setCantidad(rs.getLong(3));
+			p.setTipo(rs.getString(4));
+			p.setValor(rs.getBigDecimal(5));
+			lista.add(p);
+		}
+		} catch (Exception e) {
+			throw new TechnicalException(e);
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		
 		return lista;
 	}
 

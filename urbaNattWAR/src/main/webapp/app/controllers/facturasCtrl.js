@@ -57,10 +57,8 @@ app.controller(
 						var us = new Usuario();
 						us.nombreProducto = "TODOS";
 						us.tipo =  "TODOS";
-						console.log("llega");
 						productosSvc.consultarProductos(us).then(function(res) {
 							if (res.data != null) {
-								console.log("exito");
 								var t= {};
 								$scope.productos=[];
 								for (var i = 0; i < res.data.length; i++) {
@@ -70,12 +68,34 @@ app.controller(
 									$scope.productos.push(t);
 								}
 							} else {
-								console.log("exito sin datos");
 								$scope.productos = [];
 							}
 						}, function(entryError) {
 							console.log("error");
 							$scope.productos = [];
+
+						});
+					}
+					
+					function consultarProductosRegalo(){
+						var us = new Usuario();
+						us.nombreProducto = "TODOS";
+						us.tipo =  "TODOS";
+						productosSvc.consultarProductos(us).then(function(res) {
+							if (res.data != null) {
+								var t= {};
+								$scope.productosRegaloConsulta=[];
+								for (var i = 0; i < res.data.length; i++) {
+									t=res.data[i];
+									t.seleccionado=false;
+									t.cantidad=0;
+									$scope.productosRegaloConsulta.push(t);
+								}
+							} else {
+								$scope.productosRegaloConsulta = [];
+							}
+						}, function(entryError) {
+							$scope.productosRegaloConsulta = [];
 
 						});
 					}
@@ -317,12 +337,14 @@ app.controller(
 						$rootScope.facturaArevertir=null;
 						$scope.mostrarEditar = false;
 						$scope.productosFactura=[];
+						$scope.productosRegalo=[];
 						$scope.mensaje = "";
 						$scope.nombreUsuario = "";
 						$scope.facturasTabla = [];
 						$scope.factura = new Usuario();
 						$scope.mostrarTabla = true;
 						consultarProductos();
+						consultarProductosRegalo();
 						consultarClientes();
 						
 
@@ -355,6 +377,18 @@ app.controller(
 						}else {
 						productoSeleccionado.seleccionado=true;
 						$scope.productosFactura.push(productoSeleccionado);
+						}
+					}
+					
+
+					$scope.seleccionarProductoRegalo = function(productoSeleccionado){
+						if(validarSeleccion(productoSeleccionado,$scope.productosRegalo)){
+							productoSeleccionado.seleccionado=false;
+							var index = $scope.productosRegalo.indexOf(productoSeleccionado);
+							$scope.productosRegalo.splice(index,1);
+						}else {
+						productoSeleccionado.seleccionado=true;
+						$scope.productosRegalo.push(productoSeleccionado);
 						}
 					}
 					
@@ -496,14 +530,33 @@ app.controller(
 						}
 						
 						for (var i = 0; i < $scope.productosFactura.length; i++) {
-							if($scope.productosFactura[i].seleccionado == true && $scope.productosFactura[i].cantidad==0){
+							if($scope.productosFactura[i].seleccionado == true && ($scope.productosFactura[i].cantidad == null || 
+									$scope.productosFactura[i].cantidad==0 || $scope.productosFactura[i].valor==null || $scope.productosFactura[i].valor==0)){
 								var informationAlert = $uibModal
 										.open({
 											animation : true,
 											templateUrl : "app/views/modals/informationModal.html",
 											controller : function($scope) {
 												$scope.title = "Validación productos";
-												$scope.message ="Se debe ingresar una cantidad para cada producto seleccionado";
+												$scope.message ="Se debe ingresar una cantidad/valor para cada producto seleccionado de venta";
+												$scope.acept = function() {
+													informationAlert.close();
+												}
+											}
+										});
+								return;
+							}
+						}
+						for (var i = 0; i < $scope.productosRegalo.length; i++) {
+							if($scope.productosRegalo[i].seleccionado == true && ($scope.productosRegalo[i].cantidad == null || 
+									$scope.productosRegalo[i].cantidad==0)){
+								var informationAlert = $uibModal
+										.open({
+											animation : true,
+											templateUrl : "app/views/modals/informationModal.html",
+											controller : function($scope) {
+												$scope.title = "Validación productos";
+												$scope.message ="Se debe ingresar una cantidad para cada producto seleccionado de regalo";
 												$scope.acept = function() {
 													informationAlert.close();
 												}
@@ -513,6 +566,7 @@ app.controller(
 							}
 						}
 						$scope.factura.productos=$scope.productosFactura;
+						$scope.factura.productosRegalo=$scope.productosRegalo;
 						$scope.factura.valorFactura=$scope.valorTotalFactura;
 						facturasSvc
 								.crearFactura($scope.factura)

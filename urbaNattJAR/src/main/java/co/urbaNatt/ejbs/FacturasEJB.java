@@ -129,6 +129,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			insertsBDInDTO.setParametros(parametros);
 			resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
 			Long idFactura = 0L;
+			idFactura = consultarIdFacturaPorNumero(usuarioInDTO.getNumeroFactura(), conexion);
+			String fechaActual=operacionesBD.fechaStringPorDate(new Date());
 			for (ProductoDTO p : usuarioInDTO.getProductos()) {
 				// se crea un detalle factura por cada producto agregado
 				parametros = new ArrayList<Object>();
@@ -136,12 +138,32 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				insertsBDInDTO.setTabla(TablasConstans.FACTURA_PRODUCTO);
 				insertsBDInDTO.setCampos(CamposTablaConstans.CAMPOS_FACTURA_PRODUCTO);
 				parametros.add(SecuenciasConstans.NEXT_FACTURA_PRODUCTO);
-				idFactura = consultarIdFacturaPorNumero(usuarioInDTO.getNumeroFactura(), conexion);
 				parametros.add(idFactura);
 				parametros.add(p.getIdProducto());
-				parametros.add(operacionesBD.fechaStringPorDate(new Date()));
+				parametros.add(fechaActual);
 				parametros.add(p.getCantidad());
 				parametros.add(p.getNombreProducto() + " " + p.getPeso() + " " + p.getUnidadMedidad());
+				parametros.add("VENTA");
+				parametros.add(p.getValor());
+				insertsBDInDTO.setParametros(parametros);
+				resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
+				// se resta del lote la cantidad agregada
+				restarCantidadProductos(p, conexion);
+			}
+			for (ProductoDTO p : usuarioInDTO.getProductosRegalo()) {
+				// se crea un detalle factura por cada producto agregado
+				parametros = new ArrayList<Object>();
+				insertsBDInDTO.setConexion(conexion);
+				insertsBDInDTO.setTabla(TablasConstans.FACTURA_PRODUCTO);
+				insertsBDInDTO.setCampos(CamposTablaConstans.CAMPOS_FACTURA_PRODUCTO);
+				parametros.add(SecuenciasConstans.NEXT_FACTURA_PRODUCTO);
+				parametros.add(idFactura);
+				parametros.add(p.getIdProducto());
+				parametros.add(fechaActual);
+				parametros.add(p.getCantidad());
+				parametros.add(p.getNombreProducto() + " " + p.getPeso() + " " + p.getUnidadMedidad());
+				parametros.add("REGALO");
+				parametros.add(BigDecimal.ZERO);
 				insertsBDInDTO.setParametros(parametros);
 				resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
 				// se resta del lote la cantidad agregada
