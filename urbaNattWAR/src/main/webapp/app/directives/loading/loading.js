@@ -20,6 +20,38 @@ app.directive('loading', function($rootScope) {
     };
 });
 
+app.directive("fileread", ['$rootScope',function ($rootScope) {
+    return {
+        scope: {
+            fileread: "="
+        },
+        link: function (scope, element, attributes) {
+            element.bind("change", function (changeEvent) {
+                var reader = new FileReader();
+                reader.onload = function (loadEvent) {
+                    scope.$apply(function () {
+                        scope.fileread = loadEvent.target.result;
+                    });
+                }
+                $rootScope.nombreArchivo=changeEvent.target.files[0].name;
+                reader.readAsDataURL(changeEvent.target.files[0]);
+                
+            });
+        }
+    }
+}]);
+
+
+
+
+
+app.filter('startFromGrid', function() {
+	  return function(input, start) {
+	    start = +start;
+	    return input.slice(start);
+	  }
+	});
+
 app.directive('urbanattCurrency', ['$filter', '$locale', function ($filter, $locale) {
     return {
         require: 'ngModel',

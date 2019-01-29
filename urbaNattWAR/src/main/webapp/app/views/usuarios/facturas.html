@@ -43,7 +43,9 @@
 	<div class="form-group">
 		<div class="accordion-inner" ng-show="mostrarTabla"
 			style="overflow-y: auto; overflow-x: auto; width: 1000px; height: 600px;">
-			<table class="table table-striped table-bordered custom">
+			<fieldset class="scheduler-border">
+				<legend class="scheduler-border">Facturas</legend>
+			<table ng-init="configPages()" class="table table-striped table-bordered custom">
 				<thead>
 					<th>#</th>
 					<th>Número factura</th>
@@ -62,7 +64,7 @@
 				</thead>
 				<tbody>
 					<tr class="accordion-group"
-						ng-repeat="u in facturasTabla track by $index">
+						ng-repeat="u in facturasTabla  | startFromGrid: currentPage * pageSize | limitTo: pageSize track by $index">
 						<td>{{$index+1}}</td>
 						<td>{{u.numeroFactura}}</td>
 						<td>{{u.nombreCliente}}</td>
@@ -89,6 +91,20 @@
 				<label class="labelFormulario" ng-show="usuariosTabla.length == 0">No
 					Existen registros</label>
 			</center>
+			<center>
+					<div class='btn-group'>
+						<button type='button' class='btn btn-default'
+							ng-disabled='currentPage == 0'
+							ng-click='currentPage = currentPage - 1'>&laquo;</button>
+						<button type='button' class='btn btn-default'
+							ng-disabled='currentPage == page.no - 1'
+							ng-click='setPage(page.no)' ng-repeat='page in pages'>{{page.no}}</button>
+						<button type='button' class='btn btn-default'
+							ng-disabled='currentPage >= facturasTabla.length/pageSize - 1'
+							ng-click='currentPage = currentPage + 1'>&raquo;</button>
+					</div>
+				</center>
+				</fieldset>
 		</div>
 
 	</div>
@@ -216,11 +232,13 @@
 				<legend>Productos regalo</legend>
 				<div class="form-group col-xs-12 col-md-6">
 					<label>Seleccione el producto</label> <input type="text"
+					ng-show="productoRegalo == null || productoRegalo.nombreProducto == null"
 						name="productoRegalo" id="productoRegalo" ng-model="productoRegalo"
 						value="{{productoVenta.nombreProducto}}"
 						ng-keyup="completeRegalo(productoRegalo)" class="form-control" />
 						
-						
+						<input type="text" disabled="disabled" ng-show="productoRegalo != null && productoRegalo.nombreProducto != null"
+					ng-model="productoRegalo.nombreProducto" class="form-control" />
 					<ul class="list-group">
 						<li class="list-group-item" ng-repeat="p in productosRegaloFiltro"
 							ng-click="fillTextboxRegalo(p)">{{p.nombreProducto}}</li>
@@ -242,7 +260,7 @@
 		</div>
 		
 		<div class="form-group col-xs-12 col-md-7">
-		 <div ng-show="productosRegalo != null && productosFactura.length > 0"
+		 <div ng-show="productosRegalo != null && productosRegalo.length > 0"
 			style="overflow-y: auto; height: 100px;">
 		<ul class="list-group">
 						<li class="list-group-item" ng-repeat="p in productosRegalo">

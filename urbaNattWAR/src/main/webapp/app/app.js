@@ -2,7 +2,7 @@
 var app = angular.module("sbAdministrative", ['ui.router', 'ngSanitize', 'ngCsv', 'ui.bootstrap', 'underscore']);
 // configure the module
 //State Navegation - el location
-app.config(function ($stateProvider, $urlRouterProvider) {
+app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
     $stateProvider
         .state('login', {
             url: "/login",
@@ -19,12 +19,7 @@ app.config(function ($stateProvider, $urlRouterProvider) {
             url: "/inicio",
             templateUrl: "app/views/index.html"
         })
-        .state('app.usuarios', {
-            url: "/usuarios",
-            templateUrl: "app/views/usuarios/usuarios.html",
-            controller: 'usuariosCtrl as usua',
-        })
-           .state('app.clientes', {
+         .state('app.clientes', {
             url: "/clientes",
             templateUrl: "app/views/usuarios/clientes.html",
             controller: 'clientesCtrl as clie',
@@ -61,6 +56,29 @@ app.config(function ($stateProvider, $urlRouterProvider) {
 
         ;
     $urlRouterProvider.otherwise('/login');
+    
+    
+    $httpProvider.interceptors.push(['$q', '$location', '$window', '$rootScope', function ($q, $location, $window, $rootScope) {
+             return {
+                 'response': function(response) {
+                     if (response.status === 401) {
+                         console.log("Response 401");
+                     }
+                     if($rootScope.usuarioSesion == null || $rootScope.usuarioSesion.nombreUsuario==null){
+                     	 $window.location = '/urbaNatt/#/app/login';
+                     }
+                     return response || $q.when(response);
+                 },
+                 'responseError': function(rejection) {
+                     if (rejection.status === 401) {
+                         $window.location.pathname = '/login';
+                     }
+                     return $q.reject(rejection);
+                 }
+             };
+         }]);
+
+   
 });
 
 app.constant("CONFIG", {
@@ -68,9 +86,7 @@ app.constant("CONFIG", {
     userAppId: "userAppId",
     tokenHeader: "tokenHeader",
     roleName: "roleName",
-    launchYear: 2016,
-    chartColors: ["#3b683e", "#ecbe31", "#63af56", "#d5662a", "#a6502c", "#1a1a1a", "#484a49", "#767777", "#5A5A5A", "#586464", "#645A5A"],
-    channelTypes: ["", "CHAT", "VIDEO LLAMADA", "LLAMADA"],
+    launchYear: 2019,
     roles: ["Administrador", "Vendedor", "Sin rol"],
     estados: ["Activo", "Inactivo"],
     appVersion: "1.0",
@@ -123,4 +139,35 @@ app.constant("MESSAGES", {
 app.run(function ($rootScope, CONFIG, MESSAGES) {
     $rootScope.CONFIG = CONFIG;
     $rootScope.MESSAGES = MESSAGES;
+    
+    $rootScope.pageSize=8;
+
+    $rootScope.configurarPaginador = function(listaDatos,pages,currentPage){
+        var ini = currentPage - 4;
+        var fin = currentPage + 5;
+        if (ini < 1) {
+          ini = 1;
+          if (Math.ceil(listaDatos.length / $rootScope.pageSize) > $rootScope.pageSize)
+            fin = $rootScope.pageSize;
+          else
+            fin = Math.ceil(listaDatos.length / $rootScope.pageSize);
+        } else {
+          if (ini >= Math.ceil(listaDatos.length / $rootScope.pageSize) - $rootScope.pageSize) {
+            ini = Math.ceil(listaDatos.length / $rootScope.pageSize) - $rootScope.pageSize;
+            fin = Math.ceil(listaDatos.length / $rootScope.pageSize);
+          }
+        }
+        if (ini < 1) ini = 1;
+        for (var i = ini; i <= fin; i++) {
+          pages.push({
+            no: i
+          });
+        }
+
+        if (currentPage >= pages.length){
+          currentPage =   pages.length - 1;
+        }
+
+    }
+    
 });

@@ -3,6 +3,9 @@ app.controller(
 				function($state, $scope, $rootScope, MESSAGES, CONFIG,
 						$uibModal, $filter, usuariosSvc, generalesSvc,$rootScope) {
 
+					// variables paginador
+					$scope.currentPage = 0;
+					$scope.pages = [];
 					
 					$scope.mostrarEditar = false;
 					$scope.estados = [ 'Activo', 'Inactivo' ];
@@ -45,6 +48,8 @@ app.controller(
 						usuariosSvc.consultarClientes(us).then(function(res) {
 							if (res.data != null) {
 								$scope.clientesTabla = res.data;
+								$scope.currentPage = 0;
+								$scope.configPages();	
 							} else {
 								$scope.clientesTabla = [];
 							}
@@ -270,6 +275,17 @@ app.controller(
 										});
 					}
 
+					// INICIO CONFIG PAGINADOR
+					$scope.configPages = function() {
+						$scope.pages.length = 0;
+						$rootScope.configurarPaginador($scope.clientesTabla,
+								$scope.pages, $scope.currentPage);
+
+					}
+					$scope.setPage = function(index) {
+						$scope.currentPage = index - 1;
+					};
+					//FIN INICIO CONFIG PAGINADOR 
 					$scope.abrirAgregarUsuario = function() {
 						$scope.mostrarTabla = false;
 						$scope.cliente = new Usuario();

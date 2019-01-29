@@ -3,6 +3,10 @@ app.controller(
 				function($state, $scope, MESSAGES, CONFIG,
 						$uibModal, $filter, facturasSvc, usuariosSvc, productosSvc, $rootScope) {
 
+					// variables paginador
+					$scope.currentPage = 0;
+					$scope.pages = [];
+					
 					
 					$scope.mostrarEditar = false;
 					$scope.dias=0;
@@ -324,6 +328,8 @@ app.controller(
 						facturasSvc.consultasFacturas(us).then(function(res) {
 							if (res.data != null) {
 								$scope.facturasTabla = res.data;
+								$scope.currentPage = 0;
+								$scope.configPages();
 							} else {
 								$scope.facturasTabla = [];
 							}
@@ -638,5 +644,17 @@ app.controller(
 						consultarProductos();
 						$scope.productosFactura=[];
 					}
+					
+					// INICIO CONFIG PAGINADOR
+					$scope.configPages = function() {
+						$scope.pages.length = 0;
+						$rootScope.configurarPaginador($scope.facturasTabla,
+								$scope.pages, $scope.currentPage);
+
+					}
+					$scope.setPage = function(index) {
+						$scope.currentPage = index - 1;
+					};
+					//FIN INICIO CONFIG PAGINADOR 
 
 				});

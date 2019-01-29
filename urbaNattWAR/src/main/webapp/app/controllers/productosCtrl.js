@@ -3,6 +3,9 @@ app.controller(
 				function($state, $scope, $rootScope, MESSAGES, CONFIG,
 						$uibModal, $filter, productosSvc) {
 
+					// variables paginador
+					$scope.currentPage = 0;
+					$scope.pages = [];
 					
 					$scope.mostrarEditar = false;
 					$scope.tipos = [ 'Proteina', 'Vitamina', 'Otro' ];
@@ -21,6 +24,8 @@ app.controller(
 						productosSvc.consultarProductos(us).then(function(res) {
 							if (res.data != null) {
 								$scope.productosTabla = res.data;
+								$scope.currentPage = 0;
+								$scope.configPages();								
 							} else {
 								$scope.productosTabla = [];
 							}
@@ -183,6 +188,19 @@ app.controller(
 
 										});
 					}
+					
+					
+					// INICIO CONFIG PAGINADOR
+					$scope.configPages = function() {
+						$scope.pages.length = 0;
+						$rootScope.configurarPaginador($scope.productosTabla,
+								$scope.pages, $scope.currentPage);
+
+					}
+					$scope.setPage = function(index) {
+						$scope.currentPage = index - 1;
+					};
+					//FIN INICIO CONFIG PAGINADOR 
 
 					$scope.abrirAgregarUsuario = function() {
 						$scope.mostrarTabla = false;

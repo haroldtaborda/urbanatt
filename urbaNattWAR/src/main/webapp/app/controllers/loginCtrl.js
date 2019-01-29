@@ -5,11 +5,28 @@ app.controller("loginCtrl", function($state, $scope, CONFIG, MESSAGES, loginSvc,
 
     $window.sessionStorage.clear();
 
+    function mostrarMensaje(dto){
+		var informationAlert = $uibModal
+		.open({
+			animation : true,
+			templateUrl : "app/views/modals/informationModal.html",
+			controller : function(
+					$scope) {
+				$scope.title = dto.titulo;
+				$scope.message = dto.mensaje;
+				$scope.acept = function() {
+					informationAlert
+							.close();
+				}
+			}
+		});
+	}
+    
     vm.authenticate = function() {
-        $rootScope.$broadcast('startLoading')
-        loginSvc.login(vm.userId, vm.password).then(function(res) {
-            $rootScope.$broadcast('endLoading');
+            loginSvc.login(vm.userId, vm.password).then(function(res) {
             if (res.data.responseResult.result) {
+            	//USUARIO 
+            	$rootScope.usuarioSesion=res.data.loginResult;
                 $state.go("app.inicio");
             } else {
                 var informationAlert = $uibModal.open({
