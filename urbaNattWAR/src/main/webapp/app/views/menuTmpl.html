@@ -7,13 +7,10 @@
                 <li><a ng-click="menu.goTo('app.productos')" style="cursor:pointer"><span class="icon sb-planes_agenda"></span>Productos</a></li>
                 <li><a ng-click="menu.goTo('app.facturas')" style="cursor:pointer"><span class="icon sb-documentos"></span>Facturas</a></li>
                 <li><a ng-click="menu.goTo('app.reportes')" style="cursor:pointer"><span class="icon sb-documentos"></span>Reportes</a></li>
-         <li class="labelMenu"><a ng-click="menu.goTo('login')" style="cursor:pointer"><span class="icon sb-salir"></span>Cerrar sesión</a></li>
+                <li><a ng-click="menu.goTo('login')" style="cursor:pointer"><span class="icon sb-salir"></span>Cerrar sesión</a></li>
+               <li><a ng-click="menu.goTo('app.inicio')" style="cursor:pointer"><span class="icon sb-avatar_masculino"></span>Bienvenid@: {{usuarioSesion.nombreCompleto}}-{{usuarioSesion.rol}}</a></li>
             </ul>
-            <ul class="nav navbar-nav navbar-right">
-            <li style="    font-size: 17px;
-    top: 30px;" class="floatRight labelMenu"><span class="icon sb-avatar_masculino"></span>Bienvenido: {{usuarioSesion.nombreCompleto}}-{{usuarioSesion.rol}}</li>
-            
-            </ul>
+
         </div>
     </div>
      

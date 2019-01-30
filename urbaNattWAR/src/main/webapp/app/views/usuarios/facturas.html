@@ -116,16 +116,23 @@
 					placeholder="# factura" ng-model="factura.numeroFactura" />
 
 			</div>
+			
+				<div class="form-group col-xs-12 col-md-6">
+					<label>*Cliente</label> <input type="text"
+				 	name="clienteSeleccionado" id="clienteSeleccionado" ng-model="clienteSeleccionado"
+				 	ng-show="clienteSeleccionado == null || clienteSeleccionado.idCliente == null"
+						ng-keyup="completeCliente(clienteSeleccionado)" class="form-control">
+					
+					<input type="text" disabled="disabled" ng-show="clienteSeleccionado != null && clienteSeleccionado.idCliente != null"
+					ng-model="clienteSeleccionado.nombreCliente" class="form-control"
+					 />
+					<ul class="list-group">
+						<li class="list-group-item" ng-repeat="e in clientesFiltro"
+							ng-click="fillTextboxCli(e)">{{e.nombreCliente}}-{{e.numId}}</li>
+					</ul>
+				</div>
 
-			<div class="form-group col-xs-12 col-md-6">
-				<label>*Cliente</label> <select class="form-control"
-					required="required" ng-model="factura.idCliente"
-					ng-selected="factura.idCliente==e.numId"
-					ng-change="consultarFacturasPorCliente()">
-					<option ng-repeat="e in clientes"
-						label="{{e.nombreCliente}}-{{e.numId}}" value="{{e.numId}} ">{{e.nombreCliente}}-{{e.numId}}</option>
-				</select>
-			</div>
+			
 
 		</div>
 

@@ -106,7 +106,7 @@ app.controller(
 					
 					$scope.consultarFacturasPorCliente=function(){
 						
-						usuariosSvc.consultarSucursalesPorCC($scope.factura.idCliente).then(function(res) {
+						usuariosSvc.consultarSucursalesPorCC($scope.clienteSeleccionado.numId).then(function(res) {
 							if (res.data != null) {
 								$scope.sucursales = res.data;
 							} else {
@@ -340,6 +340,8 @@ app.controller(
 					}
 
 					function inicializar() {
+						$scope.clienteSeleccionado=null;
+						$scope.valorTotalFactura=0;
 						$rootScope.facturaArevertir=null;
 						$scope.mostrarEditar = false;
 						$scope.productosFactura=[];
@@ -412,6 +414,7 @@ app.controller(
 					
 					$scope.cancelar = function() {
 						$scope.valorTotalFactura=0;
+						$scope.clienteSeleccionado=null;
 						$scope.mostrarTabla = true;
 						$scope.factura = new Usuario();
 					}
@@ -495,8 +498,8 @@ app.controller(
 							$scope.mensaje = $scope.mensaje + " numeroFactura"
 							cont++;
 						}
-						if ($scope.factura.idCliente == null
-								|| $scope.factura.idCliente == '') {
+						if ($scope.clienteSeleccionado == null
+								|| $scope.clienteSeleccionado.idCliente == '') {
 							if (cont > 0) {
 								$scope.mensaje = $scope.mensaje + ","
 							}
@@ -573,6 +576,7 @@ app.controller(
 								return;
 							}
 						}
+						$scope.factura.idCliente=$scope.clienteSeleccionado.numId;
 						$scope.factura.productos=$scope.productosFactura;
 						$scope.factura.productosRegalo=$scope.productosRegalo;
 						$scope.factura.valorFactura=$scope.valorTotalFactura;
@@ -606,6 +610,21 @@ app.controller(
 										});
 					}
 					
+					$scope.completeCliente=function(pro){
+						
+						var output=[];
+						angular.forEach($scope.clientes,function(p){
+							if(p.nombreCliente.toLowerCase().indexOf(pro.toLowerCase())>=0){
+								output.push(p);
+							}
+						});
+						$scope.clientesFiltro=output;
+					}
+					$scope.fillTextboxCli=function(string){
+						$scope.clienteSeleccionado=string;
+						$scope.clientesFiltro=null;
+						$scope.consultarFacturasPorCliente();
+					}
 					
 					$scope.complete=function(pro){
 						
@@ -638,6 +657,7 @@ app.controller(
 					}
 
 					$scope.abrirAgregarUsuario = function() {
+						$scope.clienteSeleccionado=null;
 						$scope.valorTotalFactura=0;
 						$scope.mostrarTabla = false;
 						$scope.factura = new Usuario();
