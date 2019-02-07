@@ -106,7 +106,7 @@ app.controller(
 					
 					$scope.consultarFacturasPorCliente=function(){
 						
-						usuariosSvc.consultarSucursalesPorCC($scope.clienteSeleccionado.numId).then(function(res) {
+						usuariosSvc.consultarSucursalesPorCC($scope.clienteSeleccionado.idCliente).then(function(res) {
 							if (res.data != null) {
 								$scope.sucursales = res.data;
 							} else {

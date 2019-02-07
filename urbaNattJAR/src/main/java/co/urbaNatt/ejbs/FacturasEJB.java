@@ -641,7 +641,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			// Agregar un titulo con su respectiva fuente
 			paragraph.add(new Phrase("URBANATT FUERZA Y VITALIDAD"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Dirección: Calle 30A número 43_50 San Benito"));
+			paragraph.add(new Phrase("Dirección: Calle 13 Cr 11 # 10-42"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -883,7 +883,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			// Agregar un titulo con su respectiva fuente
 			paragraph.add(new Phrase("URBANATT FUERZA Y VITALIDAD"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Dirección: Calle 30A número 43_50 San Benito"));
+			paragraph.add(new Phrase("Dirección: Calle 13 Cr 11 # 10-42"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -1126,7 +1126,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			// Agregar un titulo con su respectiva fuente
 			paragraph.add(new Phrase("URBANATT FUERZA Y VITALIDAD"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Dirección: Calle 30A número 43_50 San Benito"));
+			paragraph.add(new Phrase("Dirección: Calle 13 Cr 11 # 10-42"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -1513,7 +1513,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			// Agregar un titulo con su respectiva fuente
 			paragraph.add(new Phrase("URBANATT FUERZA Y VITALIDAD"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Dirección: Calle 30A número 43_50 San Benito"));
+			paragraph.add(new Phrase("Dirección: Calle 13 Cr 11 # 10-42"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -1547,6 +1547,10 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			for (int j = 0; j < 8; j++) {
 				anchocolumnas2[j] = .50f;
 			}
+			
+			BigDecimal sumaTotalGeneral = BigDecimal.ZERO;
+			BigDecimal sumaPagadoGeneral = BigDecimal.ZERO;
+			BigDecimal sumaDeudaGeneral = BigDecimal.ZERO;
 				
 			while (rs.next()) {
 				paragraph = new Paragraph();
@@ -1655,7 +1659,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 					}
 				}
 
-				PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + formatoImporte.format(sumaTotal) ));
+				PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + formatoImporte.format(sumaTotal)));
 				celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
 				celdaSum.setColspan(8);
 				tableFacturas.addCell(celdaSum);
@@ -1670,12 +1674,24 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				celdaSum.setColspan(8);
 				tableFacturas.addCell(celdaSum);
 				document.add(tableFacturas);
+				
+				//sumo general
+				sumaTotalGeneral=sumaTotalGeneral.add(sumaTotal);
+				sumaPagadoGeneral=sumaPagadoGeneral.add(sumaPagado);
+				sumaDeudaGeneral=sumaDeudaGeneral.add(sumaDeuda);
 			}
 
 			paragraph = new Paragraph();
 			paragraph.add(new Phrase("Total de facturas: "+ contadorTotalFacturas));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Final del documento. Reporte inicial facturas Urbanatt"));
+			paragraph.add(new Phrase("Valor total de las facturas: "+ formatoImporte.format(sumaTotalGeneral)));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Valor pagado de las facturas: "+ formatoImporte.format(sumaPagadoGeneral)));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Valor adeudado de las facturas: "+ formatoImporte.format(sumaDeudaGeneral)));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Final del documento. Reporte cuentas por cobrar Urbanatt"));
 			document.add(paragraph);
 
 			// Cerrar el documento
