@@ -1142,8 +1142,18 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			document.add(paragraph);
 			OperacionesBDInDTO consulta = new OperacionesBDInDTO();
 			consulta.setConexion(conexion);
+			if(reporteDTO.getIdCliente() != null){
+				consulta.setConsulta(
+						"select DISTINCT TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CI.NOMBRE,DIRECCION, C.ID_CLIENTE from CLIENTES C INNER JOIN CIUDADES CI ON C.CIUDAD=CI.ID "
+						+ "WHERE NUMID =? ORDER BY C.NOMBRECOMPLETO");
+				List<Object> parametros = new ArrayList<Object>();
+				parametros.add(reporteDTO.getIdCliente().toString());
+				consulta.setParametros(parametros);
+			}
+			else{
 			consulta.setConsulta(
 					"select DISTINCT TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CI.NOMBRE,DIRECCION, C.ID_CLIENTE from CLIENTES C INNER JOIN CIUDADES CI ON C.CIUDAD=CI.ID ORDER BY C.NOMBRECOMPLETO");
+			}
 			rs = operacionesBD.ejecutarConsulta(consulta);
 			String tipo = "";
 					// Creacion de una tabla
