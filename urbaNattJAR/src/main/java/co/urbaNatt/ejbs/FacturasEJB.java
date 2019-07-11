@@ -1094,6 +1094,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			if (rs3 != null) {
 				try {
 					rs3.close();
+					operacionesBD.cerrarStatement();
 				} catch (SQLException e) {
 					 
 					e.printStackTrace();
@@ -1196,6 +1197,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 					if (rs != null) {
 						try {
 							rs.close();
+							operacionesBD.cerrarStatement();
 						} catch (SQLException e) {
 							 
 							e.printStackTrace();
@@ -1252,11 +1254,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 								"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO,FECHA_PAGO_TOTAL,ID_FACTURA, S.NOMBRESUCURSAL,(select COUNT(D.ID_DETALLE) FROM DETALLE_FACTURA D WHERE D.ID_FACTURA=F.ID_FACTURA)  from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?",
 								conexion, parametros);
 						rs2 = operacionesBD.ejecutarConsulta(consulta);
-						consulta = new OperacionesBDInDTO(
-								"SELECT FA.NUMERO_FACTURA,F.FECHA_CREACION,F.NUMERO_RECIBO ,F.VALOR_PAGADO FROM DETALLE_FACTURA F INNER JOIN FACTURAS FA ON FA.ID_FACTURA=F.ID_FACTURA WHERE FA.ID_CLIENTE=? ORDER BY  FA.NUMERO_FACTURA",
-								conexion, parametros);
-						rs5 = operacionesBD.ejecutarConsulta(consulta);
-
+						
 						paragraph = new Paragraph();
 						paragraph.add(new Phrase(Chunk.NEWLINE));
 						paragraph.add(new Phrase("Facturas por cliente"));
@@ -1353,6 +1351,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						if (rs2 != null) {
 							try {
 								rs2.close();
+								operacionesBD.cerrarStatement();
 							} catch (SQLException e) {
 								 
 								e.printStackTrace();
@@ -1398,6 +1397,12 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						cell = new PdfPCell(new Paragraph("Valor abonado", f3));
 						cell.setBackgroundColor(new BaseColor(211, 216, 205));
 						tableAbonos.addCell(cell);
+						
+						consulta = new OperacionesBDInDTO(
+								"SELECT FA.NUMERO_FACTURA,F.FECHA_CREACION,F.NUMERO_RECIBO ,F.VALOR_PAGADO FROM DETALLE_FACTURA F INNER JOIN FACTURAS FA ON FA.ID_FACTURA=F.ID_FACTURA WHERE FA.ID_CLIENTE=? ORDER BY  FA.NUMERO_FACTURA",
+								conexion, parametros);
+						rs5 = operacionesBD.ejecutarConsulta(consulta);
+
 						while (rs5.next()) {
 								cell = new PdfPCell(new Paragraph("Abono", fontNormal));
 								tableAbonos.addCell(cell);
@@ -1413,6 +1418,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						if (rs5!= null) {
 							try {
 								rs5.close();
+								operacionesBD.cerrarStatement();
 							} catch (SQLException e) {
 								 
 								e.printStackTrace();

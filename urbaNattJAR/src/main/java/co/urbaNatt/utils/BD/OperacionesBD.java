@@ -99,12 +99,12 @@ public class OperacionesBD {
 	}
 
 	public void cerrarStatement() {
-		if (statement != null) {
-			try {
+		try {
+			if (statement != null && !statement.isClosed()) {
 				statement.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
 			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 
