@@ -283,6 +283,7 @@ public class ProductosDAO {
 				dto.setValorPagado(rs.getBigDecimal(3));
 				dto.setIdDetalle(rs.getLong(4));
 				dto.setIdFactura(idFactura);
+				dto.setFechaAbono(rs.getString(6));
 				lista.add(dto);
 			}
 		} catch (Exception e) {

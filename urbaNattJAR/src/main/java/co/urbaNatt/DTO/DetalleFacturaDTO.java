@@ -15,6 +15,7 @@ public class DetalleFacturaDTO implements Serializable {
 	private String numeroRecibo;
 	private String estado;
 	private String numeroFactura;
+	private String fechaAbono;
 	/**
 	 * @return the idDetalle
 	 */
@@ -86,6 +87,18 @@ public class DetalleFacturaDTO implements Serializable {
 	 */
 	public void setNumeroFactura(String numeroFactura) {
 		this.numeroFactura = numeroFactura;
+	}
+	/**
+	 * @return the fechaAbono
+	 */
+	public String getFechaAbono() {
+		return fechaAbono;
+	}
+	/**
+	 * @param fechaAbono the fechaAbono to set
+	 */
+	public void setFechaAbono(String fechaAbono) {
+		this.fechaAbono = fechaAbono;
 	}
 	
 	

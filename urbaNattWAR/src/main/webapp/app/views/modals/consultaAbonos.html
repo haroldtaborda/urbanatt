@@ -11,6 +11,7 @@
 					<th>Número factura</th>
 					<th>Número recivo</th>
 					<th>Valor abono</th>
+					<th>Fecha abono</th>
 					<th>Acciones</th>
 				</thead>
 				<tbody>
@@ -20,6 +21,7 @@
 						<td>{{u.numeroFactura}}</td>
 						<td>{{u.numeroRecibo}}</td>
 						<td>{{u.valorPagado  | currency}}</td>
+						<td>{{u.fechaAbono}}</td>
 						<th width="4%">
 								<a ng-click="modificarAbono(u)"><img title="Modificar abono"
 								src="assets/img/EditTableHS.png"></a>
