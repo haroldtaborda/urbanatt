@@ -645,7 +645,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Correo: urbanattproteins@gmail.com"));
+			paragraph.add(new Phrase("Correo: urbanattfuerzayvitalidad@gmail.com"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Fecha-hora: "+fechaHora));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -887,7 +887,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Correo: urbanattproteins@gmail.com"));
+			paragraph.add(new Phrase("Correo: urbanattfuerzayvitalidad@gmail.com"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Fecha-hora: "+fechaHora));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -1131,7 +1131,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Correo: urbanattproteins@gmail.com"));
+			paragraph.add(new Phrase("Correo: urbanattfuerzayvitalidad@gmail.com"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Fecha-hora: "+fechaHora));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -1469,6 +1469,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		// El archivo pdf que vamos a generar
 		FileOutputStream fileOutputStream;
 		ResultSet rs2 = null;
+		ResultSet rs5 = null;
 		ResultSet rs = null;
 		try {
 
@@ -1533,7 +1534,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Telefonos: 3136425448-3122249865"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
-			paragraph.add(new Phrase("Correo: urbanattproteins@gmail.com"));
+			paragraph.add(new Phrase("Correo: urbanattfuerzayvitalidad@gmail.com"));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Fecha-hora: "+fechaHora));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -1563,6 +1564,12 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			for (int j = 0; j < 8; j++) {
 				anchocolumnas2[j] = .50f;
 			}
+			float[] anchocolumnas3 = new float[5];
+			for (int j = 0; j < 5; j++) {
+				anchocolumnas3[j] = .50f;
+			}
+			
+			
 			
 			BigDecimal sumaTotalGeneral = BigDecimal.ZERO;
 			BigDecimal sumaPagadoGeneral = BigDecimal.ZERO;
@@ -1597,6 +1604,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				table.addCell(cell);
 
 				PdfPTable tableFacturas = new PdfPTable(anchocolumnas2);
+				PdfPTable tableAbonos = new PdfPTable(anchocolumnas3);
 				if (rs.getLong(1) == 2) {
 					tipo = "Cédula ciudadania";
 				} else if (rs.getLong(1) == 4) {
@@ -1695,7 +1703,54 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				sumaTotalGeneral=sumaTotalGeneral.add(sumaTotal);
 				sumaPagadoGeneral=sumaPagadoGeneral.add(sumaPagado);
 				sumaDeudaGeneral=sumaDeudaGeneral.add(sumaDeuda);
+				
+				paragraph = new Paragraph();
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				paragraph.add(new Phrase("Abonos facturas cliente"));
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				paragraph.add(new Phrase(Chunk.NEWLINE));
+				document.add(paragraph);
+
+				cell = new PdfPCell(new Paragraph("Operación", f3));
+				cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				tableAbonos.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Número factura", f3));
+				cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				tableAbonos.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Fecha abono", f3));
+				cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				tableAbonos.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Número recibo", f3));
+				cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				tableAbonos.addCell(cell);
+				cell = new PdfPCell(new Paragraph("Valor abonado", f3));
+				cell.setBackgroundColor(new BaseColor(211, 216, 205));
+				tableAbonos.addCell(cell);
+				
+				consulta = new OperacionesBDInDTO(
+						"SELECT FA.NUMERO_FACTURA,F.FECHA_CREACION,F.NUMERO_RECIBO ,F.VALOR_PAGADO FROM DETALLE_FACTURA F INNER JOIN FACTURAS FA ON FA.ID_FACTURA=F.ID_FACTURA WHERE FA.ID_CLIENTE=? ORDER BY  FA.NUMERO_FACTURA",
+						conexion, parametros);
+				rs5 = operacionesBD.ejecutarConsulta(consulta);
+
+				while (rs5.next()) {
+						tableAbonos.addCell("Abono");
+						tableAbonos.addCell(rs5.getString(1));
+						tableAbonos.addCell(rs5.getString(2));
+						tableAbonos.addCell(rs5.getString(3));
+						tableAbonos.addCell(formatoImporte.format(rs5.getBigDecimal(4)));
+				}
+				document.add(tableAbonos);
+				if (rs5!= null) {
+					try {
+						rs5.close();
+					} catch (SQLException e) {
+						 
+						e.printStackTrace();
+					}
+				}
+			
 			}
+			
 
 			paragraph = new Paragraph();
 			paragraph.add(new Phrase("Total de facturas: "+ contadorTotalFacturas));

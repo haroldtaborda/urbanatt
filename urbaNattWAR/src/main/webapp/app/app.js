@@ -36,6 +36,12 @@ app.config(function ($stateProvider, $urlRouterProvider, $httpProvider) {
             controller: 'facturasCtrl as fac',
         })
         
+        .state('app.compras', {
+            url: "/compras",
+            templateUrl: "app/views/usuarios/compras.html",
+            controller: 'comprasCtrl as com',
+        })
+        
          .state('app.reportes', {
             url: "/reportes",
             templateUrl: "app/views/usuarios/reportes.html",

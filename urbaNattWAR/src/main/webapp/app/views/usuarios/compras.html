@@ -1,14 +1,14 @@
-<div class="container panel-body" ng-controller="facturasCtrl">
+<div class="container panel-body" ng-controller="comprasCtrl">
 
 	<div id="breadcrumb">
 		<span id="migaPan" class="labelMigaPan"><a href=""><img
 				height="0" width="0" /></a><span><a href="">UrbaNatt</a></span><span>
-				&gt; </span><span><a href="">Ventas</a></span><span> &gt; </span><span>Administración
+				&gt; </span><span><a href="">Compras</a></span><span> &gt; </span><span>Administración
 				facturas</span><a id="ctl00_DefaultBreadCrumb_SkipLink"></a></span>
 
 	</div>
 
-	<h1 class="main-title">Administración ventas</h1>
+	<h1 class="main-title">Administración compras</h1>
 	<div ng-show="mostrarTabla">
 		<div class="form-group col-xs-12 col-md-12">
 			<div class="form-group col-xs-12 col-md-6">
@@ -17,6 +17,12 @@
 					ng-model="numeroFactura" />
 
 			</div>
+			
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Laboratorio</label> <input type="text"
+					class="form-control" id="" placeholder="Nombre laboratorio" ng-model="laboratorio" />
+			</div>
+			
 			<div class="form-group col-xs-12 col-md-6">
 				<label>Estado</label> <select class="form-control" ng-model="estado">
 					<option value="">Seleccione</option>
@@ -25,16 +31,10 @@
 			</div>
 
 			<div class="form-group col-xs-12 col-md-6">
-				<label>Identificación cliente</label> <input type="text"
+				<label>Identificación vendedor</label> <input type="text"
 					class="form-control" id="" placeholder="# id" ng-model="numeroId" />
-
 			</div>
 
-			<div class="form-group col-xs-12 col-md-6">
-				<label>Días facturado</label> <input type="number"
-					class="form-control" id="" placeholder="# días" ng-model="dias" />
-
-			</div>
 			<div class="col-xs-12">
 				<button ng-click="buscarUsuarios()" class="boton floatRight">Buscar</button>
 			</div>
@@ -49,14 +49,10 @@
 				<thead>
 					<th>#</th>
 					<th>Número factura</th>
-					<th>Nombre cliente</th>
-					<th>Valor factura</th>
-					<th>Valor deuda</th>
-					<th>Valor pagado</th>
+					<th>Nombre vendedor</th>
+					<th>Nombre laboratorio</th>
 					<th>Fecha factura</th>
-					<th>Sucursal</th>
-					<th>Días facturado</th>
-					<th>Tipo</th>
+					<th>Valor factura</th>
 					<th>Estado</th>
 					<td title="agregar factura"><a
 						ng-click="abrirAgregarUsuario()"><img
@@ -67,14 +63,10 @@
 						ng-repeat="u in facturasTabla  | startFromGrid: currentPage * pageSize | limitTo: pageSize track by $index">
 						<td>{{$index+1}}</td>
 						<td>{{u.numeroFactura}}</td>
-						<td>{{u.nombreCliente}}</td>
-						<td>{{u.valorFactura | currency}}</td>
-						<td>{{u.valorDeuda | currency}}</td>
-						<td>{{u.valorPagado | currency}}</td>
+						<td>{{u.nombreVendedor}}</td>
+						<td>{{u.nombreLaboratorio}}</td>
 						<td>{{u.fechaFactura | date}}</td>
-						<td>{{u.nombreSucursal}}</td>
-						<td>{{u.dias}}</td>
-						<td>{{u.tipo}}</td>
+						<td>{{u.valorFactura | currency}}</td>
 						<td>{{u.estado}}</td>
 						<th width="12%"><a ng-click="abonarFactura(u)"
 							ng-show="u.tipo == 'CREDITO' && u.valorDeuda > 0"><img
@@ -124,11 +116,11 @@
 						ng-keyup="completeCliente(clienteSeleccionado)" class="form-control">
 					
 					<input type="text" disabled="disabled" ng-show="clienteSeleccionado != null && clienteSeleccionado.idCliente != null"
-					ng-model="clienteSeleccionado.nombreCliente" class="form-control"
+					ng-model="clienteSeleccionado.nombreVendedor" class="form-control"
 					 />
 					<ul class="list-group">
 						<li class="list-group-item" ng-repeat="e in clientesFiltro"
-							ng-click="fillTextboxCli(e)">{{e.nombreCliente}}-{{e.numId}}</li>
+							ng-click="fillTextboxCli(e)">{{e.nombreVendedor}}-{{e.numId}}</li>
 					</ul>
 				</div>
 
