@@ -399,6 +399,7 @@ app.controller(
 						productoSeleccionado.seleccionado=true;
 						$scope.productosRegalo.push(productoSeleccionado);
 						$scope.productoRegalo=null;
+						
 						}
 					}
 					
@@ -663,6 +664,9 @@ app.controller(
 						$scope.factura = new Usuario();
 						consultarProductos();
 						$scope.productosFactura=[];
+						$scope.productoRegalo=null;
+						$scope.productoVenta=null;
+						$scope.productosRegalo=[];
 					}
 					
 					// INICIO CONFIG PAGINADOR
