@@ -8,10 +8,13 @@ app.controller(
 					$scope.estados = [ 'Nueva', 'Pendiente', 'Pagada', 'Cancelada', 'Cerrada' , 'En abono' ];
 					$scope.reportes = [ 'Facturas', 'Productos', 'Cuentas por cobrar','Facturas por cliente', 'Total ventas' ];
 					$scope.tipos = [ 'Mes', 'Año' ];
+					$scope.vendedores=[ 'Alirio Urbano Martinez', 'Vendedor uno', 'Vendedor dos', 'Vendedor tres', 'Local' ];
+					
 					$scope.meses = [ 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Nomviembre', 'Diciembre' ];
 					function Usuario() {
 					}
 					;
+					$scope.vendedor=null;
 
 					$scope.factura=false;
 					$scope.producto=false;
@@ -33,6 +36,10 @@ app.controller(
 						$scope.optionsFin = {maxDate: new Date(),minDate: new Date($filter('date')($scope.fechaIni, 'yyyy-MM-dd')+"T23:00:00.000Z")};
 				    }
 					$scope.seleccionarTipo = function() {
+					$scope.factura=false;
+					$scope.totalVentas=false;
+					$scope.producto=false;
+					$scope.vendedor=null;
 						if($scope.tipoReporte == 'Facturas'){
 							$scope.factura=true;
 							$scope.producto=false;
@@ -69,6 +76,7 @@ app.controller(
 						datos.tipoFactura=$scope.tipoFactura;
 						datos.mes=$scope.mes;
 						datos.fecha=new Date($scope.fecha);
+						datos.vendedor=$scope.vendedor;
 						facturasSvc.generarReporte(datos).then(function(res) {
 							var t ={};
 							t.titulo="Exito";

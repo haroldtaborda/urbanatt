@@ -92,6 +92,18 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		InsertsBDInDTO insertsBDInDTO = new InsertsBDInDTO();
 		Connection conexion = null;
 		try {
+			//calculamos el valor descuento
+			
+			BigDecimal valorCalculado= BigDecimal.ZERO;
+			if(usuarioInDTO.getDescuento() != null || !usuarioInDTO.getDescuento().isEmpty()) {
+				BigDecimal descuento=new BigDecimal(usuarioInDTO.getDescuento());
+				BigDecimal valorMultiplicacion=usuarioInDTO.getValorFactura().multiply(descuento);
+				valorCalculado=usuarioInDTO.getValorFactura().subtract((valorMultiplicacion.divide(new BigDecimal(100))));
+			}
+			else {
+				valorCalculado=usuarioInDTO.getValorFactura();
+			}
+			usuarioInDTO.setValorFactura(valorCalculado); 
 			String resultado = "";
 			conexion = ConnectionUtils.getInstance().getConnectionBack();
 			List<Object> parametros = new ArrayList<Object>();
@@ -126,6 +138,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			} else {
 				parametros.add(null);
 			}
+			parametros.add(usuarioInDTO.getDescuento());
+			parametros.add(usuarioInDTO.getVendedor());
 			insertsBDInDTO.setParametros(parametros);
 			resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
 			Long idFactura = 0L;
@@ -1539,6 +1553,8 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			paragraph.add(new Phrase("Fecha-hora: "+fechaHora));
 			paragraph.add(new Phrase(Chunk.NEWLINE));
 			paragraph.add(new Phrase("Cuentas por cobrar"));
+			paragraph.add(new Phrase(Chunk.NEWLINE));
+			paragraph.add(new Phrase("Vendedor: " + reporteDTO.getVendedor() != null && !reporteDTO.getVendedor().isEmpty() ? reporteDTO.getVendedor() : "TODOS"));
 
 			// Agregar saltos de linea
 			paragraph.add(new Phrase(Chunk.NEWLINE));
@@ -1546,8 +1562,22 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			document.add(paragraph);
 			OperacionesBDInDTO consulta = new OperacionesBDInDTO();
 			consulta.setConexion(conexion);
+			List<Object> parametros = new ArrayList<>();
+			Boolean hayVendedor=Boolean.FALSE;
+			if(reporteDTO.getVendedor() != null && !reporteDTO.getVendedor().isEmpty()) {
+				hayVendedor=Boolean.TRUE;
+				parametros.add(reporteDTO.getVendedor());
 			consulta.setConsulta(
-					"select DISTINCT TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CI.NOMBRE,DIRECCION, C.ID_CLIENTE from CLIENTES C INNER JOIN CIUDADES CI ON C.CIUDAD=CI.ID WHERE C.NUMID IN (SELECT F.ID_CLIENTE FROM FACTURAS F WHERE f.valor_deuda > 0 AND F.TIPO ='CREDITO') ORDER BY C.NOMBRECOMPLETO");
+					"select DISTINCT TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CI.NOMBRE,DIRECCION, C.ID_CLIENTE from CLIENTES C INNER JOIN CIUDADES CI ON C.CIUDAD=CI.ID WHERE C.NUMID IN (SELECT F.ID_CLIENTE FROM FACTURAS F WHERE f.valor_deuda > 0 AND F.TIPO ='CREDITO' AND F.VENDEDOR= ?) ORDER BY C.NOMBRECOMPLETO");
+			consulta.setParametros(parametros);
+			}
+			else {
+				hayVendedor=Boolean.FALSE;
+				consulta.setConsulta(
+						"select DISTINCT TIPOID,NUMID, NOMBRECOMPLETO, FIJO,CELULAR,CI.NOMBRE,DIRECCION, C.ID_CLIENTE from CLIENTES C INNER JOIN CIUDADES CI ON C.CIUDAD=CI.ID WHERE C.NUMID IN (SELECT F.ID_CLIENTE FROM FACTURAS F WHERE f.valor_deuda > 0 AND F.TIPO ='CREDITO') ORDER BY C.NOMBRECOMPLETO");
+				
+			}
+			
 			rs = operacionesBD.ejecutarConsulta(consulta);
 			String tipo = "";
 			// Creacion de una tabla
@@ -1569,7 +1599,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				anchocolumnas3[j] = .50f;
 			}
 			
-			
+			String query="";
 			
 			BigDecimal sumaTotalGeneral = BigDecimal.ZERO;
 			BigDecimal sumaPagadoGeneral = BigDecimal.ZERO;
@@ -1582,7 +1612,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				paragraph.add(new Phrase(Chunk.NEWLINE));
 				paragraph.add(new Phrase(Chunk.NEWLINE));
 				document.add(paragraph);
-				List<Object> parametros = new ArrayList<>();
+				parametros=new ArrayList<Object>();
 				table = new PdfPTable(anchocolumnas);
 				cell = new PdfPCell(new Paragraph("Tipo documento", f4));
 				 cell.setBackgroundColor(new BaseColor(211, 216, 205));
@@ -1620,8 +1650,16 @@ public class FacturasEJB implements IFacturasEJBLocal {
 
 				document.add(table);
 				parametros.add(rs.getString(2));
+				
+				if(hayVendedor) {
+					parametros.add(reporteDTO.getVendedor());
+					query="select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO, NOMBRESUCURSAL from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?  AND F.VALOR_DEUDA > 0 AND F.TIPO ='CREDITO' AND F.VENDEDOR= ? ";
+				}
+				else {
+					query="select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO, NOMBRESUCURSAL from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?  AND F.VALOR_DEUDA > 0 AND F.TIPO ='CREDITO' ";
+				}
 				consulta = new OperacionesBDInDTO(
-						"select fecha_factura,sysdate-TO_DATE(FECHA_FACTURA, 'dd/MM/yyyy'), NUMERO_FACTURA,DESCRIPCION, VALOR_FACTURA,VALOR_DEUDA,VALOR_PAGADO, NOMBRESUCURSAL from FACTURAS F LEFT JOIN SUCURSALES S ON F.ID_SUCURSAL=S.ID_SUCURSAL WHERE F.ID_CLIENTE= ?  AND F.VALOR_DEUDA > 0 AND F.TIPO ='CREDITO' ",
+						query,
 						conexion, parametros);
 				rs2 = operacionesBD.ejecutarConsulta(consulta);
 
@@ -1727,8 +1765,14 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				cell.setBackgroundColor(new BaseColor(211, 216, 205));
 				tableAbonos.addCell(cell);
 				
+				if(hayVendedor) {
+				query="SELECT FA.NUMERO_FACTURA,F.FECHA_CREACION,F.NUMERO_RECIBO ,F.VALOR_PAGADO FROM DETALLE_FACTURA F INNER JOIN FACTURAS FA ON FA.ID_FACTURA=F.ID_FACTURA WHERE FA.ID_CLIENTE=? AND FA.VENDEDOR= ? AND FA.VALOR_DEUDA >0 ORDER BY  FA.NUMERO_FACTURA";
+				}
+				else {
+					query="SELECT FA.NUMERO_FACTURA,F.FECHA_CREACION,F.NUMERO_RECIBO ,F.VALOR_PAGADO FROM DETALLE_FACTURA F INNER JOIN FACTURAS FA ON FA.ID_FACTURA=F.ID_FACTURA WHERE FA.ID_CLIENTE=? AND FA.VALOR_DEUDA >0 ORDER BY  FA.NUMERO_FACTURA";
+				}
 				consulta = new OperacionesBDInDTO(
-						"SELECT FA.NUMERO_FACTURA,F.FECHA_CREACION,F.NUMERO_RECIBO ,F.VALOR_PAGADO FROM DETALLE_FACTURA F INNER JOIN FACTURAS FA ON FA.ID_FACTURA=F.ID_FACTURA WHERE FA.ID_CLIENTE=? AND FA.VALOR_DEUDA >0 ORDER BY  FA.NUMERO_FACTURA",
+						query,
 						conexion, parametros);
 				rs5 = operacionesBD.ejecutarConsulta(consulta);
 

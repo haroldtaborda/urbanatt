@@ -147,10 +147,12 @@ public class ProductosDAO {
 					dto.setDescripcion(rs.getString(10));
 					dto.setNombreCliente(rs.getString(11));
 					dto.setTipo(rs.getString(12));
-					dto.setDias(rs.getInt(15));
 					dto.setDetallesDTO(consultarDetallesProducto(dto.getIdFactura(),conexion));
 					dto.setIdSucursal(rs.getLong(13));
 					dto.setNombreSucursal(rs.getString(14));
+					dto.setDescuento(rs.getString(15));
+					dto.setVendedor(rs.getString(16));
+					dto.setDias(rs.getInt(17));
 					lista.add(dto);
 			     	}
 				}

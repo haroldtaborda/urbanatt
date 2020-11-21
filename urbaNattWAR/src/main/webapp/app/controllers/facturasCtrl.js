@@ -6,7 +6,8 @@ app.controller(
 					// variables paginador
 					$scope.currentPage = 0;
 					$scope.pages = [];
-					
+					$scope.descuento=0;
+					$scope.vendedores=[ 'Alirio Urbano Martinez', 'Vendedor uno', 'Vendedor dos', 'Vendedor tres', 'Local' ];
 					
 					$scope.mostrarEditar = false;
 					$scope.dias=0;
@@ -119,7 +120,7 @@ app.controller(
 						
 					}
 					$scope.valorTotalFactura=0;
-					$scope.sumarTotalFactura=function(){
+				$scope.sumarTotalFactura=function(){
 						$scope.valorTotalFactura=0;
 						for (var i = 0; i < $scope.productos.length; i++) {
 							if($scope.productos[i].cantidad && $scope.productos[i].cantidad > 0){
@@ -342,6 +343,7 @@ app.controller(
 					function inicializar() {
 						$scope.clienteSeleccionado=null;
 						$scope.valorTotalFactura=0;
+						$scope.descuento=0;
 						$rootScope.facturaArevertir=null;
 						$scope.mostrarEditar = false;
 						$scope.productosFactura=[];
@@ -415,6 +417,7 @@ app.controller(
 					
 					$scope.cancelar = function() {
 						$scope.valorTotalFactura=0;
+						$scope.descuento=0;
 						$scope.clienteSeleccionado=null;
 						$scope.mostrarTabla = true;
 						$scope.factura = new Usuario();
@@ -581,6 +584,7 @@ app.controller(
 						$scope.factura.productos=$scope.productosFactura;
 						$scope.factura.productosRegalo=$scope.productosRegalo;
 						$scope.factura.valorFactura=$scope.valorTotalFactura;
+						$scope.factura.descuento=$scope.descuento;
 						facturasSvc
 								.crearFactura($scope.factura)
 								.then(
@@ -660,6 +664,7 @@ app.controller(
 					$scope.abrirAgregarUsuario = function() {
 						$scope.clienteSeleccionado=null;
 						$scope.valorTotalFactura=0;
+						$scope.descuento=0;
 						$scope.mostrarTabla = false;
 						$scope.factura = new Usuario();
 						consultarProductos();

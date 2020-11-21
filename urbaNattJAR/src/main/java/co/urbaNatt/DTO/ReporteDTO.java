@@ -19,6 +19,7 @@ public class ReporteDTO implements Serializable {
 	private String tipoFactura;
 	private String mes;
 	private Date fecha;
+	private String vendedor;
 	/**
 	 * @return the fechaInicio
 	 */
@@ -138,6 +139,12 @@ public class ReporteDTO implements Serializable {
 	 */
 	public void setFecha(Date fecha) {
 		this.fecha = fecha;
+	}
+	public String getVendedor() {
+		return vendedor;
+	}
+	public void setVendedor(String vendedor) {
+		this.vendedor = vendedor;
 	}
 	
 	

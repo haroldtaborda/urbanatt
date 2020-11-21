@@ -52,6 +52,13 @@
 					<option ng-repeat="e in reportes" value="{{e}}">{{e}}</option>
 				</select>
 			</div>
+			
+			<div class="form-group col-xs-12 col-md-6" ng-show="tipoReporte == 'Cuentas por cobrar'">
+				<label>*Vendedor</label> <select class="form-control" ng-model="vendedor">
+					<option value="">Seleccione</option>
+					<option ng-repeat="e in vendedores" value="{{e}}">{{e}}</option>
+				</select>
+			</div>
 			 <div ng-show="factura">
 			<div class="form-group col-xs-12 col-md-6">
 				<label>Nombre reporte</label> <input type="text" class="form-control" id=""

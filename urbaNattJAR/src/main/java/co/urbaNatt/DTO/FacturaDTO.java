@@ -29,6 +29,8 @@ public class FacturaDTO implements Serializable {
 	private List<DetalleProductoDTO> detallesDTO;
 	private Long idSucursal;
 	private String nombreSucursal;
+	private String descuento;
+	private String vendedor;
 	/**
 	 * @return the nombreCliente
 	 */
@@ -244,6 +246,18 @@ public class FacturaDTO implements Serializable {
 	 */
 	public void setDetallesDTO(List<DetalleProductoDTO> detallesDTO) {
 		this.detallesDTO = detallesDTO;
+	}
+	public String getDescuento() {
+		return descuento;
+	}
+	public void setDescuento(String descuento) {
+		this.descuento = descuento;
+	}
+	public String getVendedor() {
+		return vendedor;
+	}
+	public void setVendedor(String vendedor) {
+		this.vendedor = vendedor;
 	}
 
 }

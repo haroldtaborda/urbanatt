@@ -50,6 +50,7 @@
 					<th>#</th>
 					<th>Número factura</th>
 					<th>Nombre cliente</th>
+					<th>Nombre vendedor</th>
 					<th>Valor factura</th>
 					<th>Valor deuda</th>
 					<th>Valor pagado</th>
@@ -68,6 +69,7 @@
 						<td>{{$index+1}}</td>
 						<td>{{u.numeroFactura}}</td>
 						<td>{{u.nombreCliente}}</td>
+						<td>{{u.vendedor}}</td>
 						<td>{{u.valorFactura | currency}}</td>
 						<td>{{u.valorDeuda | currency}}</td>
 						<td>{{u.valorPagado | currency}}</td>
@@ -153,6 +155,23 @@
 					<option value="">Seleccione</option>
 					<option ng-repeat="e in tipos" value="{{e}}">{{e}}</option>
 				</select>
+			</div>
+
+		</div>
+		
+			<div class="form-group col-xs-12 col-md-12">
+			<div class="form-group col-xs-12 col-md-6">
+				<label>*Vendedor</label> <select class="form-control" ng-model="factura.vendedor">
+					<option value="">Seleccione</option>
+					<option ng-repeat="e in vendedores" value="{{e}}">{{e}}</option>
+				</select>
+			</div>
+
+
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Porcentaje descuento</label> <input type="text"
+					 class="form-control" id=""
+					placeholder="% descuento" ng-model="descuento" />
 			</div>
 
 		</div>
