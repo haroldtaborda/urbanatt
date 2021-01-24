@@ -227,7 +227,8 @@ app.controller(
 						$scope.factura = usuario;
 						$scope.productosFactura=usuario.productos;
 						$scope.clienteSeleccionado={};
-						$scope.clienteSeleccionado.numId=usuario.idCliente;
+						$scope.clienteSeleccionado.idCliente=usuario.idCliente;
+					    $scope.clienteSeleccionado.numId=usuario.idCliente;
 						$scope.clienteSeleccionado.nombreCliente=usuario.nombreCliente;
 					}
 					

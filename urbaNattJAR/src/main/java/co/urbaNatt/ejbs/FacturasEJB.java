@@ -2655,7 +2655,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			if(productoDTO.getIdClientePrecios() != null) {
 				//se elimina el anteriorp ara q parezca edicion
 				List<Object> parametros = new ArrayList<Object>();
-				parametros.add(productoDTO.getIdClientePrecios());
+				parametros.add(productoDTO.getIdCliente());
 				OperacionesBDInDTO ejecutarInDTO = null;
 				
 				ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM PRECIOS_CLIENTE_DETALLES  D WHERE D.ID_CLIENTE_PRECIOS = (SELECT P.ID_CLIENTE_PRECIOS FROM PRECIOS_CLIENTE P WHERE P.ID_CLIENTE = ?)", conexion,
