@@ -49,6 +49,7 @@ import co.urbaNatt.DTO.DetalleFacturaDTO;
 import co.urbaNatt.DTO.FacturaDTO;
 import co.urbaNatt.DTO.InsertsBDInDTO;
 import co.urbaNatt.DTO.OperacionesBDInDTO;
+import co.urbaNatt.DTO.PreciosClienteDTO;
 import co.urbaNatt.DTO.ProductoDTO;
 import co.urbaNatt.DTO.ReporteDTO;
 import co.urbaNatt.DTO.ResultSecurityDTO;
@@ -273,6 +274,33 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			parametros.add(numeroFactura);
 			OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO(
 					"SELECT ID_FACTURA FROM FACTURAS WHERE NUMERO_FACTURA = ?", conexion, parametros);
+			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
+			if (rs.next()) {
+				idFactura = rs.getLong(1);
+			}
+		} catch (Exception e) {
+			return 0L;
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		return idFactura;
+	}
+
+	private Long consultarIdPrecioPorNumero(String idCliente, Connection conexion) {
+		List<Object> parametros = new ArrayList<Object>();
+		ResultSet rs = null;
+		Long idFactura = 0L;
+		try {
+			parametros.add(idCliente);
+			OperacionesBDInDTO consultasInDTO = new OperacionesBDInDTO(
+					"SELECT ID_CLIENTE_PRECIOS FROM PRECIOS_CLIENTE WHERE ID_CLIENTE = ?", conexion, parametros);
 			rs = operacionesBD.ejecutarConsulta(consultasInDTO);
 			if (rs.next()) {
 				idFactura = rs.getLong(1);
@@ -2611,8 +2639,208 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				} catch (SQLException e) {
 					// Error al cerrar la conexion
 				}
+				}
 			}
 		}
+
+		@Override
+		public String crearPrecios(PreciosClienteDTO productoDTO) throws TechnicalException, BusinessException {
+
+
+		InsertsBDInDTO insertsBDInDTO = new InsertsBDInDTO();
+		Connection conexion = null;
+		try { 
+			
+			if(productoDTO.getIdClientePrecios() != null) {
+				//se elimina el anteriorp ara q parezca edicion
+				eliminarRegistrosPrecios(productoDTO.getIdClientePrecios());
+			}
+			String resultado = "";
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
+			List<Object> parametros = new ArrayList<Object>();
+			insertsBDInDTO.setConexion(conexion);
+			insertsBDInDTO.setTabla(TablasConstans.PRECIOS_CLIENTE);
+			insertsBDInDTO.setCampos(CamposTablaConstans.CAMPOS_CLIENTE_PRECIOS);
+
+			parametros.add(SecuenciasConstans.NEXT_PRECIOS);
+			parametros.add(productoDTO.getIdCliente());
+			parametros.add(productoDTO.getEstado());
+			parametros.add(operacionesBD.fechaStringPorDate(new Date()));
+			
+			insertsBDInDTO.setParametros(parametros);
+			resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
+			Long idPrecio = 0L;
+			idPrecio = consultarIdPrecioPorNumero(productoDTO.getIdCliente(), conexion);
+			String fechaActual=operacionesBD.fechaStringPorDate(new Date());
+			for (ProductoDTO p : productoDTO.getProductos()) {
+				// se crea un detalle factura por cada producto agregado
+				parametros = new ArrayList<Object>();
+				insertsBDInDTO.setConexion(conexion);
+				insertsBDInDTO.setTabla(TablasConstans.PRECIOS_CLIENTE_DETALLES);
+				insertsBDInDTO.setCampos(CamposTablaConstans.CAMPOS_CLIENTE_PRECIOS_DETALLES);
+				parametros.add(SecuenciasConstans.NEXT_PRECIOS_DETALLES);
+				parametros.add(idPrecio);
+				parametros.add(p.getIdProducto());
+				parametros.add(p.getNombreProducto());
+				parametros.add(p.getValor());
+				parametros.add(fechaActual);
+				insertsBDInDTO.setParametros(parametros);
+				resultado = operacionesBD.insertarRegistro(insertsBDInDTO);
+			}
+		
+
+			if (resultado.equals(EstadosOperaciones.EXITO.getEstado())) {
+				return MensajesConstans.REGISTRO_EXITOSO;
+			} else {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			}
+		} catch (BusinessException e) {
+			throw e;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			if (e instanceof TechnicalException) {
+				throw (TechnicalException) e;
+			} else {
+				throw new TechnicalException(e);
+			}
+
+		} finally {
+			if (conexion != null) {
+				try {
+					conexion.close();
+				} catch (SQLException e) {
+					// Error al cerrar la conexion
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+	
 	}
+
+		private String eliminarRegistrosPrecios(Long idClientePrecios) throws TechnicalException, BusinessException {
+			// TODO Auto-generated method stub
+			Connection conexion = null;
+			try {
+				Integer resultado = null;
+				conexion = ConnectionUtils.getInstance().getConnectionBack();
+				List<Object> parametros = new ArrayList<Object>();
+				parametros.add(idClientePrecios);
+				OperacionesBDInDTO ejecutarInDTO = null;
+				
+				ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM PRECIOS_CLIENTE_DETALLES  D WHERE D.ID_CLIENTE_PRECIOS = (SELECT P.ID_CLIENTE_PRECIOS FROM PRECIOS_CLIENTE P WHERE P.ID_CLIENTE = ?)", conexion,
+						parametros);
+				operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+				ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM PRECIOS_CLIENTE WHERE ID_CLIENTE = ?", conexion,
+						parametros);
+				resultado=operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+				if (resultado.compareTo(EstadosOperaciones.EXITO.getId()) == 0) {
+					return MensajesConstans.REGISTRO_EXITOSO;
+				} else {
+					ResultSecurityDTO result = new ResultSecurityDTO();
+					result.error = new Error();
+					result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+					result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+					result.result = false;
+					result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+					throw new BusinessException(result);
+				}
+			} catch (BusinessException e) {
+				throw e;
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+				if (e instanceof TechnicalException) {
+					throw (TechnicalException) e;
+				} else {
+					throw new TechnicalException(e);
+				}
+
+			} finally {
+				if (conexion != null) {
+					try {
+						conexion.close();
+					} catch (SQLException e) {
+						// Error al cerrar la conexion
+					}
+				}
+			}
+		}
+
+		@Override
+		public List<ProductoDTO> consultarPrecios(String idCliente) throws TechnicalException, BusinessException {
+
+
+			Connection conexion = null;
+			try {
+				List<ProductoDTO> result = null;
+				ProductosDAO dao = ProductosDAO.getInstance();
+				conexion = ConnectionUtils.getInstance().getConnectionBack();
+				result = dao.consultarPrecios(idCliente, conexion);
+				return result;
+			} catch (BusinessException e) {
+				throw e;
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+				if (e instanceof TechnicalException) {
+					throw (TechnicalException) e;
+				} else {
+					throw new TechnicalException(e);
+				}
+
+			} finally {
+				if (conexion != null) {
+					try {
+						conexion.close();
+					} catch (SQLException e) {
+						// Error al cerrar la conexion
+					}
+				}
+			}
+		
+		}
+
+		@Override
+		public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente)throws TechnicalException, BusinessException {
+
+
+			Connection conexion = null;
+			try {
+				List<PreciosClienteDTO> result = null;
+				ProductosDAO dao = ProductosDAO.getInstance();
+				conexion = ConnectionUtils.getInstance().getConnectionBack();
+				result = dao.consultarPreciosTabla(idCliente, conexion);
+				return result;
+			} catch (BusinessException e) {
+				throw e;
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+				if (e instanceof TechnicalException) {
+					throw (TechnicalException) e;
+				} else {
+					throw new TechnicalException(e);
+				}
+
+			} finally {
+				if (conexion != null) {
+					try {
+						conexion.close();
+					} catch (SQLException e) {
+						// Error al cerrar la conexion
+					}
+				}
+			}
+		
+		}
+
+		@Override
+		public String eliminarPrecio(PreciosClienteDTO productoDTO) throws TechnicalException, BusinessException {
+			return 	eliminarRegistrosPrecios(productoDTO.getIdClientePrecios());
+		}
+
 
 }

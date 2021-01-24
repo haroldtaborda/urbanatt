@@ -13,6 +13,8 @@ public class SecuenciasConstans {
 	public static final String NEXT_CLIENTES = SEC_CLIENTES + PUNTO + NEXTVAL;
 	public static final String NEXT_PRODUCTOS = "SEC_PRODUCTOS" + PUNTO + NEXTVAL;
 	public static final String NEXT_FACTURAS = "SEC_FACTURAS" + PUNTO + NEXTVAL;
+	public static final String NEXT_PRECIOS = "SEC_PRECIOS" + PUNTO + NEXTVAL;
+	public static final String NEXT_PRECIOS_DETALLES = "SEC_PRECIOS_DETALLES" + PUNTO + NEXTVAL;
 	public static final String NEXT_FACTURA_PRODUCTO = "SEC_FACTURA_PRODUCTO" + PUNTO + NEXTVAL;
 	public static final String NEXT_DETALLE_FACTURA = "SEC_DETALLE_FACTURA" + PUNTO + NEXTVAL;
 	

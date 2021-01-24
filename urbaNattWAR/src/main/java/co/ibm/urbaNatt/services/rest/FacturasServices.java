@@ -20,6 +20,8 @@ import org.json.simple.JSONObject;
 
 import co.urbaNatt.DTO.DetalleFacturaDTO;
 import co.urbaNatt.DTO.FacturaDTO;
+import co.urbaNatt.DTO.PreciosClienteDTO;
+import co.urbaNatt.DTO.ProductoDTO;
 import co.urbaNatt.DTO.ReporteDTO;
 import co.urbaNatt.ejbs.IFacturasEJBLocal;
 import co.urbaNatt.exceptions.BusinessException;
@@ -58,6 +60,35 @@ public class FacturasServices {
 		}
 	}
 	
+	
+	@SuppressWarnings("unchecked")
+	@POST
+	@Path("/crearPrecios")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response crearPrecios(PreciosClienteDTO productoDTO) {
+		JSONObject response = new JSONObject();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			String res = ejb.crearPrecios(productoDTO);
+			response.put("resultado", res);
+			response.put("responseResult", ResponseUtilities.getResponse(true, null));
+			return Response.status(200).entity(response).header("Access-Control-Allow-Origin", "*").build();
+		} catch (NamingException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (TechnicalException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (BusinessException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		}
+	}
+	
+	
 	@SuppressWarnings("unchecked")
 	@POST
 	@Path("/eliminarFactura")
@@ -67,6 +98,33 @@ public class FacturasServices {
 		try {
 			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
 			String res = ejb.eliminarFactura(productoDTO);
+			response.put("resultado", res);
+			response.put("responseResult", ResponseUtilities.getResponse(true, null));
+			return Response.status(200).entity(response).header("Access-Control-Allow-Origin", "*").build();
+		} catch (NamingException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (TechnicalException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (BusinessException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@POST
+	@Path("/eliminarPrecio")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response eliminarPrecio(PreciosClienteDTO productoDTO) {
+		JSONObject response = new JSONObject();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			String res = ejb.eliminarPrecio(productoDTO);
 			response.put("resultado", res);
 			response.put("responseResult", ResponseUtilities.getResponse(true, null));
 			return Response.status(200).entity(response).header("Access-Control-Allow-Origin", "*").build();
@@ -254,6 +312,76 @@ public class FacturasServices {
 		}
 
 	}
+
+	
+	@SuppressWarnings("unchecked")
+	@GET
+	@Path("/consultarPrecios/{idCliente}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response consultarPrecios(
+			@PathParam("idCliente") String idCliente) {
+
+		JSONObject json = null;
+		List<ProductoDTO> usuarios = new ArrayList<ProductoDTO>();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			usuarios = ejb.consultarPrecios(idCliente);
+			Response response = Response.status(200).entity(usuarios).header("Access-Control-Allow-Origin", "*").build();
+
+			return response;
+
+		} catch (TechnicalException e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(401).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		} catch (BusinessException e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(401).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		}
+
+		catch (Exception e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		}
+
+	}
+	
+	@SuppressWarnings("unchecked")
+	@GET
+	@Path("/consultarPreciosTabla/{idCliente}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response consultarPreciosTabla(
+			@PathParam("idCliente") String idCliente) {
+
+		JSONObject json = null;
+		List<PreciosClienteDTO> usuarios = new ArrayList<PreciosClienteDTO>();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			usuarios = ejb.consultarPreciosTabla(idCliente);
+			Response response = Response.status(200).entity(usuarios).header("Access-Control-Allow-Origin", "*").build();
+
+			return response;
+
+		} catch (TechnicalException e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(401).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		} catch (BusinessException e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(401).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		}
+
+		catch (Exception e) {
+			json = new JSONObject();
+			json.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(json.toJSONString()).header("Access-Control-Allow-Origin", "*").build();
+		}
+
+	}
+
 	
 	@SuppressWarnings("unchecked")
 	@GET

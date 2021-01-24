@@ -13,6 +13,7 @@ import co.urbaNatt.DTO.DetalleFacturaDTO;
 import co.urbaNatt.DTO.DetalleProductoDTO;
 import co.urbaNatt.DTO.FacturaDTO;
 import co.urbaNatt.DTO.OperacionesBDInDTO;
+import co.urbaNatt.DTO.PreciosClienteDTO;
 import co.urbaNatt.DTO.ProductoDTO;
 import co.urbaNatt.constans.ConsultasDinamicasConstans;
 import co.urbaNatt.exceptions.TechnicalException;
@@ -138,10 +139,10 @@ public class ProductosDAO {
 					dto.setIdFactura(rs.getLong(1));
 					dto.setNumeroFactura(rs.getString(2));
 					dto.setIdCliente(rs.getString(3));
-					dto.setValorDeuda(rs.getBigDecimal(6));
-					dto.setValorPagado(rs.getBigDecimal(7));
 					dto.setFechaCreacion(rs.getString(4));
 					dto.setFechaFactura(operacionesBD.fechaDateforString(rs.getString(5)));
+					dto.setValorDeuda(rs.getBigDecimal(6));
+					dto.setValorPagado(rs.getBigDecimal(7));
 					dto.setEstado(rs.getString(8));
 					dto.setValorFactura(rs.getBigDecimal(9));
 					dto.setDescripcion(rs.getString(10));
@@ -161,18 +162,21 @@ public class ProductosDAO {
 				dto.setIdFactura(rs.getLong(1));
 				dto.setNumeroFactura(rs.getString(2));
 				dto.setIdCliente(rs.getString(3));
-				dto.setValorDeuda(rs.getBigDecimal(6));
-				dto.setValorPagado(rs.getBigDecimal(7));
 				dto.setFechaCreacion(rs.getString(4));
 				dto.setFechaFactura(operacionesBD.fechaDateforString(rs.getString(5)));
+				dto.setValorDeuda(rs.getBigDecimal(6));
+				dto.setValorPagado(rs.getBigDecimal(7));
 				dto.setEstado(rs.getString(8));
 				dto.setValorFactura(rs.getBigDecimal(9));
 				dto.setDescripcion(rs.getString(10));
 				dto.setNombreCliente(rs.getString(11));
-				dto.setDias(rs.getInt(15));
 				dto.setTipo(rs.getString(12));
-				dto.setDetallesDTO(consultarDetallesProducto(dto.getIdFactura(), conexion));
+				dto.setDetallesDTO(consultarDetallesProducto(dto.getIdFactura(),conexion));
+				dto.setIdSucursal(rs.getLong(13));
 				dto.setNombreSucursal(rs.getString(14));
+				dto.setDescuento(rs.getString(15));
+				dto.setVendedor(rs.getString(16));
+				dto.setDias(rs.getInt(17));
 				lista.add(dto);
 				}
 			}
@@ -302,7 +306,87 @@ public class ProductosDAO {
 		}
 		return lista;
 	}
-	
+
+
+	public List<ProductoDTO> consultarPrecios(String idCliente, Connection conexion)  throws TechnicalException {
+		 List<ProductoDTO> lista = new ArrayList<ProductoDTO>();
+		 ProductoDTO pDTO=null;
+		ResultSet rs = null;
+		try {
+			List<Object> parametros = new ArrayList<Object>();
+			StringBuilder sb = new StringBuilder();
+				sb.append(ConsultasDinamicasConstans.CONSULTAR_CLIENTE_PRECIOS);
+				parametros.add(idCliente);
+			OperacionesBDInDTO inDTO = new OperacionesBDInDTO(sb.toString(), conexion,
+					parametros);
+			rs = operacionesBD.ejecutarConsulta(inDTO);
+			while (rs.next()) {
+				pDTO= new ProductoDTO();
+				pDTO.setIdProducto(rs.getLong(3));
+				pDTO.setNombreProducto(rs.getString(4));
+				pDTO.setValor(rs.getBigDecimal(5));
+				lista.add(pDTO);
+			}
+		} catch (Exception e) {
+			throw new TechnicalException(e);
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		return lista;
+	}
+
+
+	public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente, Connection conexion) throws TechnicalException {
+		 List<PreciosClienteDTO> lista = new ArrayList<PreciosClienteDTO>();
+		 PreciosClienteDTO dto=null;
+		ResultSet rs = null;
+		try {
+			List<Object> parametros = new ArrayList<Object>();
+			StringBuilder sb = new StringBuilder();
+				
+				if(idCliente!=null && !idCliente.isEmpty() && !idCliente.equalsIgnoreCase("TODOS")) {
+					parametros.add(idCliente);
+					sb.append(ConsultasDinamicasConstans.CONSULTAR_CLIENTE_PADRE);
+				}
+				else {
+					sb.append(ConsultasDinamicasConstans.CONSULTAR_CLIENTE_PADRE_S);
+				}
+				
+			OperacionesBDInDTO inDTO = new OperacionesBDInDTO(sb.toString(), conexion,
+					parametros);
+			rs = operacionesBD.ejecutarConsulta(inDTO);
+			while (rs.next()) {
+				dto= new PreciosClienteDTO();
+				dto.setIdClientePrecios(rs.getLong(1));
+				dto.setNombreCliente(rs.getString(5));
+				dto.setIdCliente(idCliente);
+				dto.setEstado(rs.getString(3));
+				dto.setFechaCreacion(rs.getString(4));
+				dto.setProductos(consultarPrecios(idCliente, conexion));
+				
+				lista.add(dto);
+			}
+		} catch (Exception e) {
+			throw new TechnicalException(e);
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			operacionesBD.cerrarStatement();
+		}
+		return lista;
+	}
 
 }
 	

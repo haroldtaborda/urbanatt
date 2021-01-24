@@ -27,6 +27,31 @@ app.factory('facturasSvc', function($http, $q, CONFIG, $window) {
             });
             return deferred.promise;
         },
+        crearPrecios: function(usuario) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: usuario,
+                url: CONFIG.endpoint + "/facturas/crearPrecios"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
         abonarFactura: function(usuario) {
     		var deferred = $q.defer();
             var response = {};
@@ -127,6 +152,31 @@ app.factory('facturasSvc', function($http, $q, CONFIG, $window) {
             });
             return deferred.promise;
         },
+         eliminarPrecio: function(usuario) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: usuario,
+                url: CONFIG.endpoint + "/facturas/eliminarPrecio"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
         eliminarFactura: function(usuario) {
     		var deferred = $q.defer();
             var response = {};
@@ -183,6 +233,54 @@ app.factory('facturasSvc', function($http, $q, CONFIG, $window) {
             $http({
                 method: 'GET',
                 url: CONFIG.endpoint + "/facturas/consultasFacturas/"+usuario.numeroFactura+"/"+usuario.estado+"/"+usuario.numeroId+"/"+usuario.dias
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
+          consultarPreciosTabla: function(idCliente) {
+        	var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'GET',
+                url: CONFIG.endpoint + "/facturas/consultarPreciosTabla/"+idCliente
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
+        consultarPrecios: function(idCliente) {
+        	var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'GET',
+                url: CONFIG.endpoint + "/facturas/consultarPrecios/"+idCliente
             }).success(function(data, status, headers, config, statusText) {
                 response.data = data;
                 response.status = status;

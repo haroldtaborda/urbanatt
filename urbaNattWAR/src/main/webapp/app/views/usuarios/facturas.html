@@ -57,6 +57,7 @@
 					<th>Fecha factura</th>
 					<th>Sucursal</th>
 					<th>Días facturado</th>
+					<th>% descuento</th>
 					<th>Tipo</th>
 					<th>Estado</th>
 					<td title="agregar factura"><a
@@ -76,6 +77,7 @@
 						<td>{{u.fechaFactura | date}}</td>
 						<td>{{u.nombreSucursal}}</td>
 						<td>{{u.dias}}</td>
+						<td>{{u.descuento}}%</td>
 						<td>{{u.tipo}}</td>
 						<td>{{u.estado}}</td>
 						<th width="12%"><a ng-click="abonarFactura(u)"

@@ -1,0 +1,162 @@
+<div class="container panel-body" ng-controller="preciosClienteCrtl">
+
+	<div id="breadcrumb">
+		<span id="migaPan" class="labelMigaPan"><a href=""><img
+				height="0" width="0" /></a><span><a href="">UrbaNatt</a></span><span>
+				&gt; </span><span><a href="">Ventas</a></span><span> &gt; </span><span>Administración
+				precios</span><a id="ctl00_DefaultBreadCrumb_SkipLink"></a></span>
+
+	</div>
+
+	<h1 class="main-title">Administración precios</h1>
+	<div ng-show="mostrarTabla">
+		<div class="form-group col-xs-12 col-md-12">
+
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Identificación cliente</label> <input type="text"
+					class="form-control" id="" placeholder="# id" ng-model="numeroId" />
+
+			</div>
+
+			<div class="col-xs-12">
+				<button ng-click="buscarUsuarios()" class="boton floatRight">Buscar</button>
+			</div>
+		</div>
+	</div>
+	<div class="form-group">
+		<div class="accordion-inner" ng-show="mostrarTabla"
+			style="overflow-y: auto; overflow-x: auto; width: 1000px; height: 600px;">
+			<fieldset class="scheduler-border">
+				<legend class="scheduler-border">Precios</legend>
+			<table ng-init="configPages()" class="table table-striped table-bordered custom">
+				<thead>
+					<th>#</th>
+					<th>Cliente</th>
+					<th>Estado</th>
+					<td title="agregar cliente"><a
+						ng-click="abrirAgregarUsuario()"><img
+							src="assets/img/icoAgregar.gif"></a></td>
+				</thead>
+				<tbody>
+					<tr class="accordion-group"
+						ng-repeat="u in facturasTabla  | startFromGrid: currentPage * pageSize | limitTo: pageSize track by $index">
+						<td>{{$index+1}}</td>
+						<td>{{u.nombreCliente}}</td>
+						<td>{{u.estado}}</td>
+						<th width="12%">
+						<a ng-click="editarUsuario(u)"><img
+								title="Editar precios" src="assets/img/icoEditar.png"></a> <a
+							ng-click="eliminarUsuario(u)"><img title="Eliminar precios"
+								src="assets/img/icoEliminar.png"></a> </th>
+					</tr>
+				</tbody>
+			</table>
+			<center>
+				<label class="labelFormulario" ng-show="facturasTabla.length == 0">No
+					Existen registros</label>
+			</center>
+			<center>
+					<div class='btn-group'>
+						<button type='button' class='btn btn-default'
+							ng-disabled='currentPage == 0'
+							ng-click='currentPage = currentPage - 1'>&laquo;</button>
+						<button type='button' class='btn btn-default'
+							ng-disabled='currentPage == page.no - 1'
+							ng-click='setPage(page.no)' ng-repeat='page in pages'>{{page.no}}</button>
+						<button type='button' class='btn btn-default'
+							ng-disabled='currentPage >= facturasTabla.length/pageSize - 1'
+							ng-click='currentPage = currentPage + 1'>&raquo;</button>
+					</div>
+				</center>
+				</fieldset>
+		</div>
+
+	</div>
+	<div class=" col-xs-12 col-md-12" ng-show="!mostrarTabla">
+		<div class="form-group col-xs-12 col-md-12">
+				<div class="form-group col-xs-12 col-md-6">
+					<label>*Cliente</label> <input type="text"
+				 	name="clienteSeleccionado" id="clienteSeleccionado" ng-model="clienteSeleccionado"
+				 	ng-show="clienteSeleccionado == null || clienteSeleccionado.idCliente == null"
+						ng-keyup="completeCliente(clienteSeleccionado)" class="form-control">
+					
+					<input type="text" disabled="disabled" ng-show="clienteSeleccionado != null && clienteSeleccionado.idCliente != null"
+					ng-model="clienteSeleccionado.nombreCliente" class="form-control"
+					 />
+					<ul class="list-group">
+						<li class="list-group-item" ng-repeat="e in clientesFiltro"
+							ng-click="fillTextboxCli(e)">{{e.nombreCliente}}-{{e.numId}}</li>
+					</ul>
+				</div>
+				
+				<div class="form-group col-xs-12 col-md-6">
+						<label>Estado</label> <select class="form-control" required="required"
+							ng-model="factura.estado">
+							<option ng-repeat="e in estados" value="{{e}}">{{e}}</option>
+						</select>
+					</div>
+		</div>
+		
+				<div class="form-group col-xs-12 col-md-12">
+			<fieldset>
+				<legend>Precios productos</legend>
+				<div class="form-group col-xs-12 col-md-6">
+					<label>Seleccione el producto</label> <input type="text"
+					ng-show="productoVenta == null || productoVenta.nombreProducto == null"
+				 	name="productoVenta" id="productoVenta" ng-model="productoVenta"
+						ng-keyup="complete(productoVenta)" class="form-control">
+						
+					<input type="text" disabled="disabled" ng-show="productoVenta != null && productoVenta.nombreProducto != null"
+					ng-model="productoVenta.nombreProducto" class="form-control" />
+					<ul class="list-group">
+						<li class="list-group-item" ng-repeat="p in productosFiltro"
+							ng-click="fillTextbox(p)">{{p.nombreProducto}}</li>
+					</ul>
+				</div>
+				<div class="form-group col-xs-12 col-md-3">
+					<label>Valor</label>
+					<div class="input-group">
+						<input type="text" class="form-control" id="" placeholder="precio producto"
+							ng-model="productoVenta.valor"/>
+						<div class="input-group-addon">
+							<a ng-click="seleccionarProducto(productoVenta)"><img
+								style="width: 20px;" src="assets/img/icoModalExito.gif"></a>
+						</div>
+					</div>
+				</div>
+
+			</fieldset>
+		</div>
+	<div class="form-group col-xs-12 col-md-7">
+		<div ng-show="productosFactura != null && productosFactura.length > 0"
+			style="overflow-y: auto; height: 100px;">
+		<ul class="list-group">
+						<li class="list-group-item" ng-repeat="p in productosFactura">
+						<div class="input-group">
+						<input disabled="disabled" class="form-control" value="{{p.nombreProducto}}-${{p.valor}}"/>
+						<div class="input-group-addon">
+							<a ng-click="seleccionarProducto(p)"><img
+								style="width: 20px;" src="assets/img/icoModalError.gif"></a>
+						</div>
+					</div>
+					
+					  </li>
+					</ul>
+				</div>	
+		</div>
+
+		<div class="col-xs-12 col-sm-11">
+			<button ng-click="cancelar()" class="boton floatRight">Cancelar</button>
+		</div>
+		<div class="col-xs-12 col-sm-1" ng-show="!mostrarEditar">
+			<button ng-click="agregarUsuario()" class="boton floatRight">Guardar</button>
+		</div>
+		<div class="col-xs-12 col-sm-1" ng-show="mostrarEditar">
+			<button ng-click="agregarUsuario()" class="boton floatRight">Editar</button>
+		</div>
+
+
+
+
+	</div>
+</div>
