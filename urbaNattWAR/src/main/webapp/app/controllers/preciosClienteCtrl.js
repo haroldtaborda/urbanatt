@@ -225,6 +225,10 @@ app.controller(
 					$scope.editarUsuario = function(usuario) {
 						$scope.mostrarTabla = false;
 						$scope.factura = usuario;
+						$scope.productosFactura=usuario.productos;
+						$scope.clienteSeleccionado={};
+						$scope.clienteSeleccionado.numId=usuario.idCliente;
+						$scope.clienteSeleccionado.nombreCliente=usuario.nombreCliente;
 					}
 					
 					$scope.abonarFactura = function(factura) {

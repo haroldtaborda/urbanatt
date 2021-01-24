@@ -366,10 +366,10 @@ public class ProductosDAO {
 				dto= new PreciosClienteDTO();
 				dto.setIdClientePrecios(rs.getLong(1));
 				dto.setNombreCliente(rs.getString(5));
-				dto.setIdCliente(idCliente);
+				dto.setIdCliente(rs.getString(2));
 				dto.setEstado(rs.getString(3));
 				dto.setFechaCreacion(rs.getString(4));
-				dto.setProductos(consultarPrecios(idCliente, conexion));
+				dto.setProductos(consultarPrecios(rs.getString(2), conexion));
 				
 				lista.add(dto);
 			}

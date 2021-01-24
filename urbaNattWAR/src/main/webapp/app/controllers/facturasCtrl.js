@@ -662,6 +662,7 @@ app.controller(
 					}
 					$scope.fillTextbox=function(string){
 						$scope.productoVenta=string;
+						$scope.productosFiltro=null;
 						//aca busco el precio
 						var valor=0;
 						angular.forEach($scope.clientePrecios,function(p){

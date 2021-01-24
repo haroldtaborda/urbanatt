@@ -2650,10 +2650,20 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		InsertsBDInDTO insertsBDInDTO = new InsertsBDInDTO();
 		Connection conexion = null;
 		try { 
+			conexion = ConnectionUtils.getInstance().getConnectionBack();
 			
 			if(productoDTO.getIdClientePrecios() != null) {
 				//se elimina el anteriorp ara q parezca edicion
-				eliminarRegistrosPrecios(productoDTO.getIdClientePrecios());
+				List<Object> parametros = new ArrayList<Object>();
+				parametros.add(productoDTO.getIdClientePrecios());
+				OperacionesBDInDTO ejecutarInDTO = null;
+				
+				ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM PRECIOS_CLIENTE_DETALLES  D WHERE D.ID_CLIENTE_PRECIOS = (SELECT P.ID_CLIENTE_PRECIOS FROM PRECIOS_CLIENTE P WHERE P.ID_CLIENTE = ?)", conexion,
+						parametros);
+				operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+				ejecutarInDTO = new OperacionesBDInDTO("DELETE FROM PRECIOS_CLIENTE WHERE ID_CLIENTE = ?", conexion,
+						parametros);
+				operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
 			}
 			String resultado = "";
 			conexion = ConnectionUtils.getInstance().getConnectionBack();
