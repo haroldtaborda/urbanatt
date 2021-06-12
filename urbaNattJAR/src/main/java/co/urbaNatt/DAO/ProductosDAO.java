@@ -106,7 +106,7 @@ public class ProductosDAO {
 	}
 
 
-	public List<FacturaDTO> consultarFacturas(String numeroFactura, String estado, String numeroId, Integer dias, Connection conexion) throws TechnicalException {
+	public List<FacturaDTO> consultarFacturas(String numeroFactura, String estado, String numeroId, Integer dias, String nombreCliente, Connection conexion) throws TechnicalException {
 		 List<FacturaDTO> lista = new ArrayList<FacturaDTO>();
 		 FacturaDTO dto = null;
 		ResultSet rs = null;
@@ -126,7 +126,10 @@ public class ProductosDAO {
 				sb.append(ConsultasDinamicasConstans.CONSULTAR_FACTURA_NUMID);
 				parametros.add(numeroId);
 			}
-			
+			if(nombreCliente!=null && !nombreCliente.isEmpty() && !nombreCliente.equalsIgnoreCase("TODOS")) {
+				parametros.add("%"+nombreCliente.toUpperCase()+"%");
+				sb.append(ConsultasDinamicasConstans.CONSULTAR_FACTURA_NOMBRE_CLIENTE);
+			}
 			
 			sb.append(ConsultasDinamicasConstans.ORDER_BY_FACTURAS);
 			OperacionesBDInDTO inDTO = new OperacionesBDInDTO(sb.toString(), conexion,
@@ -343,15 +346,18 @@ public class ProductosDAO {
 	}
 
 
-	public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente, Connection conexion) throws TechnicalException {
+	public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente, String nombre, Connection conexion) throws TechnicalException {
 		 List<PreciosClienteDTO> lista = new ArrayList<PreciosClienteDTO>();
 		 PreciosClienteDTO dto=null;
 		ResultSet rs = null;
 		try {
 			List<Object> parametros = new ArrayList<Object>();
 			StringBuilder sb = new StringBuilder();
-				
-				if(idCliente!=null && !idCliente.isEmpty() && !idCliente.equalsIgnoreCase("TODOS")) {
+			if(nombre!=null && !nombre.isEmpty() && !nombre.equalsIgnoreCase("TODOS")) {
+				parametros.add("%"+nombre.toUpperCase()+"%");
+				sb.append(ConsultasDinamicasConstans.CONSULTAR_CLIENTE_PRECIOS_NOMBRE);
+			}	
+			else if(idCliente!=null && !idCliente.isEmpty() && !idCliente.equalsIgnoreCase("TODOS")) {
 					parametros.add(idCliente);
 					sb.append(ConsultasDinamicasConstans.CONSULTAR_CLIENTE_PADRE);
 				}

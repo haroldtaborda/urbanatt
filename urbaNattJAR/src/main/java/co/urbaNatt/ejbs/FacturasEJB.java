@@ -492,7 +492,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 	}
 
 	@Override
-	public List<FacturaDTO> consultasFacturas(String numeroFactura, String estado, String numeroId, Integer dias)
+	public List<FacturaDTO> consultasFacturas(String numeroFactura, String estado, String numeroId, Integer dias,String nombreCliente)
 			throws TechnicalException, BusinessException {
 
 		Connection conexion = null;
@@ -500,7 +500,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			List<FacturaDTO> result = null;
 			ProductosDAO dao = ProductosDAO.getInstance();
 			conexion = ConnectionUtils.getInstance().getConnectionBack();
-			result = dao.consultarFacturas(numeroFactura, estado, numeroId, dias, conexion);
+			result = dao.consultarFacturas(numeroFactura, estado, numeroId, dias,nombreCliente, conexion);
 			return result;
 		} catch (BusinessException e) {
 			throw e;
@@ -2815,7 +2815,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		}
 
 		@Override
-		public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente)throws TechnicalException, BusinessException {
+		public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente,String nombre)throws TechnicalException, BusinessException {
 
 
 			Connection conexion = null;
@@ -2823,7 +2823,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				List<PreciosClienteDTO> result = null;
 				ProductosDAO dao = ProductosDAO.getInstance();
 				conexion = ConnectionUtils.getInstance().getConnectionBack();
-				result = dao.consultarPreciosTabla(idCliente, conexion);
+				result = dao.consultarPreciosTabla(idCliente, nombre, conexion);
 				return result;
 			} catch (BusinessException e) {
 				throw e;

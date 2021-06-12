@@ -17,6 +17,11 @@
 					class="form-control" id="" placeholder="# id" ng-model="numeroId" />
 
 			</div>
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Nombre cliente</label> <input type="text"
+					class="form-control" id="" placeholder="nombres" ng-model="nombreCliente" />
+
+			</div>
 
 			<div class="col-xs-12">
 				<button ng-click="buscarUsuarios()" class="boton floatRight">Buscar</button>
@@ -135,9 +140,9 @@
 
 			</fieldset>
 		</div>
-	<div class="form-group col-xs-12 col-md-7">
+	<div class="form-group col-xs-12 col-md-12">
 		<div ng-show="productosFactura != null && productosFactura.length > 0"
-			style="overflow-y: auto; height: 200px;">
+			style="overflow-y: auto; height: 400px;">
 		<ul class="list-group">
 						<li class="list-group-item" ng-repeat="p in productosFactura">
 						<div class="input-group">

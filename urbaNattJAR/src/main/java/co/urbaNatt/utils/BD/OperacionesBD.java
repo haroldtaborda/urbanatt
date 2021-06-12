@@ -100,7 +100,7 @@ public class OperacionesBD {
 
 	public void cerrarStatement() {
 		try {
-			if (statement != null && !statement.isClosed()) {
+			if (statement != null) {
 				statement.close();
 			}
 		} catch (SQLException e) {

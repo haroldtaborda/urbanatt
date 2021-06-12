@@ -23,7 +23,7 @@ public interface IFacturasEJBLocal {
 	public String crearFactura(FacturaDTO usuarioInDTO) throws TechnicalException, BusinessException;
 	public String eliminarFactura(FacturaDTO usuarioInDTO) throws TechnicalException, BusinessException;
 	public String revertirFactura(FacturaDTO facturaDTO) throws TechnicalException, BusinessException;
-	public List<FacturaDTO> consultasFacturas(String numeroFactura, String estado,String numeroId, Integer dias)  throws TechnicalException, BusinessException;
+	public List<FacturaDTO> consultasFacturas(String numeroFactura, String estado,String numeroId, Integer dias, String nombreCliente)  throws TechnicalException, BusinessException;
 
 	public String abonarFactura(DetalleFacturaDTO usuarioInDTO) throws TechnicalException, BusinessException;
 	
@@ -35,7 +35,7 @@ public interface IFacturasEJBLocal {
 	public String eliminarAbono(DetalleFacturaDTO usuarioInDTO)  throws TechnicalException, BusinessException;
 	public String crearPrecios(PreciosClienteDTO productoDTO)  throws TechnicalException, BusinessException;
 	public List<ProductoDTO> consultarPrecios(String idCliente) throws TechnicalException, BusinessException;
-	public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente) throws TechnicalException, BusinessException;
+	public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente, String nombre) throws TechnicalException, BusinessException;
 	public String eliminarPrecio(PreciosClienteDTO productoDTO) throws TechnicalException, BusinessException;
 	
 }

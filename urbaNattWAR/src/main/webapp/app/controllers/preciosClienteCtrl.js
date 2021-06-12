@@ -15,6 +15,7 @@ app.controller(
 					$scope.roles = [ 'Administrador', 'Vendedor', 'Sin rol' ];
 					$scope.tipos = [ 'CREDITO', 'CONTADO' ];
 					$scope.sucursales = [];
+					$scope.nombreCliente=null;
 					function Usuario() {
 					}
 					;
@@ -43,8 +44,9 @@ app.controller(
 						var us = new Usuario();
 						us.numeroId = $scope.numeroId == null || $scope.numeroId == '' ? "TODOS"
 								: $scope.numeroId;
-						
-						facturasSvc.consultarPreciosTabla(us.numeroId).then(function(res) {
+						us.nombre= $scope.nombreCliente == null || $scope.nombreCliente == '' ? "TODOS"
+								: $scope.nombreCliente;
+						facturasSvc.consultarPreciosTabla(us.numeroId,us.nombre).then(function(res) {
 							if (res.data != null) {
 								$scope.facturasTabla = res.data;
 								$scope.currentPage = 0;

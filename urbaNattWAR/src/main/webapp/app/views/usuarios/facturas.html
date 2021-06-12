@@ -29,6 +29,12 @@
 					class="form-control" id="" placeholder="# id" ng-model="numeroId" />
 
 			</div>
+			
+			<div class="form-group col-xs-12 col-md-6">
+				<label>Nombre cliente</label> <input type="text"
+					class="form-control" id="" placeholder="nombre cliente" ng-model="nombreCliente" />
+
+			</div>
 
 			<div class="form-group col-xs-12 col-md-6">
 				<label>Días facturado</label> <input type="number"
@@ -243,7 +249,7 @@
 		<ul class="list-group">
 						<li class="list-group-item" ng-repeat="p in productosFactura">
 						<div class="input-group">
-						<input disabled="disabled" class="form-control" value="{{p.nombreProducto}}-{{p.cantidad}}-${{p.valor}}"/>
+						<input disabled="disabled" class="form-control" value="{{p.nombreProducto}}-{{p.cantidad}}-${{p.valor}}-${{p.valor*p.cantidad}} "/>
 						<div class="input-group-addon">
 							<a ng-click="seleccionarProducto(p)"><img
 								style="width: 20px;" src="assets/img/icoModalError.gif"></a>

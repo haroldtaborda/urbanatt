@@ -280,17 +280,18 @@ public class FacturasServices {
 	
 	@SuppressWarnings("unchecked")
 	@GET
-	@Path("/consultasFacturas/{numeroFactura}/{estado}/{numeroId}/{dias}")
+	@Path("/consultasFacturas/{numeroFactura}/{estado}/{numeroId}/{dias}/{nombreCliente}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response consultasFacturas(
 			@PathParam("numeroFactura") String numeroFactura,
-			@PathParam("estado") String estado, @PathParam("numeroId") String numeroId, @PathParam("dias") Integer dias) {
+			@PathParam("estado") String estado, @PathParam("numeroId") String numeroId, @PathParam("dias") Integer dias,
+			@PathParam("nombreCliente") String nombreCliente) {
 
 		JSONObject json = null;
 		List<FacturaDTO> usuarios = new ArrayList<FacturaDTO>();
 		try {
 			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
-			usuarios = ejb.consultasFacturas(numeroFactura, estado, numeroId, dias);
+			usuarios = ejb.consultasFacturas(numeroFactura, estado, numeroId, dias,nombreCliente);
 			Response response = Response.status(200).entity(usuarios).header("Access-Control-Allow-Origin", "*").build();
 
 			return response;
@@ -350,16 +351,17 @@ public class FacturasServices {
 	
 	@SuppressWarnings("unchecked")
 	@GET
-	@Path("/consultarPreciosTabla/{idCliente}")
+	@Path("/consultarPreciosTabla/{idCliente}/{nombre}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response consultarPreciosTabla(
-			@PathParam("idCliente") String idCliente) {
+			@PathParam("idCliente") String idCliente,
+			@PathParam("nombre") String nombre) {
 
 		JSONObject json = null;
 		List<PreciosClienteDTO> usuarios = new ArrayList<PreciosClienteDTO>();
 		try {
 			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
-			usuarios = ejb.consultarPreciosTabla(idCliente);
+			usuarios = ejb.consultarPreciosTabla(idCliente,nombre);
 			Response response = Response.status(200).entity(usuarios).header("Access-Control-Allow-Origin", "*").build();
 
 			return response;

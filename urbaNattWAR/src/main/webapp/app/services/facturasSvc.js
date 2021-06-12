@@ -232,7 +232,7 @@ app.factory('facturasSvc', function($http, $q, CONFIG, $window) {
             var response = {};
             $http({
                 method: 'GET',
-                url: CONFIG.endpoint + "/facturas/consultasFacturas/"+usuario.numeroFactura+"/"+usuario.estado+"/"+usuario.numeroId+"/"+usuario.dias
+                url: CONFIG.endpoint + "/facturas/consultasFacturas/"+usuario.numeroFactura+"/"+usuario.estado+"/"+usuario.numeroId+"/"+usuario.dias+"/"+usuario.nombreCliente
             }).success(function(data, status, headers, config, statusText) {
                 response.data = data;
                 response.status = status;
@@ -251,12 +251,12 @@ app.factory('facturasSvc', function($http, $q, CONFIG, $window) {
             });
             return deferred.promise;
         },
-          consultarPreciosTabla: function(idCliente) {
+          consultarPreciosTabla: function(idCliente,nombre) {
         	var deferred = $q.defer();
             var response = {};
             $http({
                 method: 'GET',
-                url: CONFIG.endpoint + "/facturas/consultarPreciosTabla/"+idCliente
+                url: CONFIG.endpoint + "/facturas/consultarPreciosTabla/"+idCliente+"/"+nombre
             }).success(function(data, status, headers, config, statusText) {
                 response.data = data;
                 response.status = status;

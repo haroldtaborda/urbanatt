@@ -16,6 +16,11 @@ app.controller(
 					$scope.roles = [ 'Administrador', 'Vendedor', 'Sin rol' ];
 					$scope.tipos = [ 'CREDITO', 'CONTADO' ];
 					$scope.sucursales = [];
+					$scope.nombreCliente=null;
+					$scope.estado=null;
+					$scope.dias=null;
+					$scope.numeroFactura=null;
+					$scope.numeroId=null;
 					function Usuario() {
 					}
 					;
@@ -317,8 +322,27 @@ app.controller(
 					}
 					
 					$scope.buscarUsuarios = function() {
+					
+						if (($scope.numeroFactura == null || $scope.numeroFactura == '') &&
+						 ($scope.estado == null || $scope.estado == '') && 
+						 ($scope.numeroId == null || $scope.numeroId == '') &&
+						 	 ($scope.nombreCliente == null || $scope.nombreCliente == '') &&
+						 	 	 ($scope.doas == null || $scope.doas == '')) {
+		                      	var dto ={};
+										dto.titulo="Error";
+										dto.mensaje="ebe ingresar por lo menos un filtro";
+										mostrarMensaje(dto);
+										return;
+							
+						}
+					
+					else{
+					
 						var us = new Usuario();
-						us.numeroFactura = $scope.numeroFactura == null
+						us.nombreCliente = $scope.nombreCliente == null
+								|| $scope.nombreCliente == '' ? "TODOS"
+								: $scope.nombreCliente;
+								us.numeroFactura = $scope.numeroFactura == null
 								|| $scope.numeroFactura == '' ? "TODOS"
 								: $scope.numeroFactura;
 						us.estado = $scope.estado == null || $scope.estado == '' ? "TODOS"
@@ -339,6 +363,7 @@ app.controller(
 							$scope.facturasTabla = [];
 
 						});
+					  }
 					}
 
 					function inicializar() {
@@ -540,6 +565,7 @@ app.controller(
 						}
 
 					}
+					
 					$scope.agregarUsuario = function() {
 						$scope.mensaje = "";
 						if (validarObligatorios()) {
