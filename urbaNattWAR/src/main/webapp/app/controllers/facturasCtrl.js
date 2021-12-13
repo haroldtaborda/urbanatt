@@ -191,30 +191,12 @@ app.controller(
 								
 								$scope.modificarAbono = function(abono) {
 									modificarAbo(abono);
-									$scope.abonosTabla =[];
-									facturasSvc.consultarAbonos(factura.idFactura).then(function(res) {
-										if (res.data != null) {
-											$scope.abonosTabla = res.data;
-										} else {
-											$scope.abonosTabla = [];
-										}
-									}, function(entryError) {
-										$scope.abonosTabla = [];
-									});
+									
 								}
 								
 								$scope.eliminarAbono = function(abono) {
 									eliminarAbon(abono);
-									$scope.abonosTabla =[];
-									facturasSvc.consultarAbonos(factura.idFactura).then(function(res) {
-										if (res.data != null) {
-											$scope.abonosTabla = res.data;
-										} else {
-											$scope.abonosTabla = [];
-										}
-									}, function(entryError) {
-										$scope.abonosTabla = [];
-									});
+									
 								}
 								
 								$scope.cancelAbonos = function() {
@@ -244,7 +226,7 @@ app.controller(
 							animation : true,
 							templateUrl : "app/views/modals/abonosModal.html",
 							controller : function($scope) {
-								$scope.numeroRecibo=abono.numeroFactura;
+								$scope.numeroRecibo=abono.numeroRecibo;
 									$scope.abonoFactura=abono.valorPagado;
 								$scope.acept = function() {
 									//abonar llamar el servicio
@@ -267,6 +249,16 @@ app.controller(
 											dto.titulo="Extio";
 											dto.mensaje="Registro modificado exitosamente";
 											mostrarMensaje(dto);
+											$scope.abonosTabla =[];
+									facturasSvc.consultarAbonos(factura.idFactura).then(function(res) {
+										if (res.data != null) {
+											$scope.abonosTabla = res.data;
+										} else {
+											$scope.abonosTabla = [];
+										}
+									}, function(entryError) {
+										$scope.abonosTabla = [];
+									});
 										} else {
 											informationAlert.close();
 											var dto ={};
@@ -303,6 +295,16 @@ app.controller(
 										dto.titulo="Extio";
 										dto.mensaje="Registro eliminado exitosamente";
 										mostrarMensaje(dto);
+										$scope.abonosTabla =[];
+									   facturasSvc.consultarAbonos(factura.idFactura).then(function(res) {
+										if (res.data != null) {
+											$scope.abonosTabla = res.data;
+										} else {
+											$scope.abonosTabla = [];
+										}
+									}, function(entryError) {
+										$scope.abonosTabla = [];
+									});
 									} else {
 										informationAlert.close();
 										var dto ={};
@@ -330,7 +332,7 @@ app.controller(
 						 	 	 ($scope.doas == null || $scope.doas == '')) {
 		                      	var dto ={};
 										dto.titulo="Error";
-										dto.mensaje="ebe ingresar por lo menos un filtro";
+										dto.mensaje="Debe ingresar por lo menos un filtro";
 										mostrarMensaje(dto);
 										return;
 							
@@ -637,7 +639,7 @@ app.controller(
 												dto.titulo="Extio";
 												dto.mensaje="Resitro agregado con exito";
 												mostrarMensaje(dto);
-												$scope.buscarUsuarios();
+												
 											} else {
 												
 												var dto ={};

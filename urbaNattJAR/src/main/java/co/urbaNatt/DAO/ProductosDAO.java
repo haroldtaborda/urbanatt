@@ -157,6 +157,7 @@ public class ProductosDAO {
 					dto.setDescuento(rs.getString(15));
 					dto.setVendedor(rs.getString(16));
 					dto.setDias(rs.getInt(17));
+					dto.setDireccion(rs.getString(18));
 					lista.add(dto);
 			     	}
 				}
@@ -180,6 +181,7 @@ public class ProductosDAO {
 				dto.setDescuento(rs.getString(15));
 				dto.setVendedor(rs.getString(16));
 				dto.setDias(rs.getInt(17));
+				dto.setDireccion(rs.getString(18));
 				lista.add(dto);
 				}
 			}

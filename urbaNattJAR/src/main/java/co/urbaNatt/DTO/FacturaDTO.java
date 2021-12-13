@@ -31,6 +31,7 @@ public class FacturaDTO implements Serializable {
 	private String nombreSucursal;
 	private String descuento;
 	private String vendedor;
+	private String direccion;
 	/**
 	 * @return the nombreCliente
 	 */
@@ -258,6 +259,12 @@ public class FacturaDTO implements Serializable {
 	}
 	public void setVendedor(String vendedor) {
 		this.vendedor = vendedor;
+	}
+	public String getDireccion() {
+		return direccion;
+	}
+	public void setDireccion(String direccion) {
+		this.direccion = direccion;
 	}
 
 }
