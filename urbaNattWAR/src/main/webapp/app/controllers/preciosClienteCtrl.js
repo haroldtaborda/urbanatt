@@ -19,7 +19,9 @@ app.controller(
 					function Usuario() {
 					}
 					;
+					$scope.valorActualizado=null;
 
+					$scope.porcentajeActualizar=null;
 					
 					$scope.fechaIniOpen = false;
 					$scope.fechaFinOpen = false;
@@ -107,8 +109,37 @@ app.controller(
 					}
 					
 			
+					$scope.actualizarPorcentaje=function(){
+					var dto ={};
+					dto.porcentaje=$scope.porcentajeActualizar;
+					dto.numId=$scope.clienteSeleccionado.numId;
+					facturasSvc
+						.actualizarPrecios(dto)
+						.then(
+								function(res) {
+									if (res.data.responseResult.result) {
+										var dto ={};
+										dto.titulo="Exito";
+										dto.mensaje="Todos los precios fueron actualizados";
+										mostrarMensaje(dto);
+										$scope.mostrarTabla = true;
+										$scope.buscarUsuarios();
+									} else {
+										var dto ={};
+										dto.titulo="Error";
+										dto.mensaje="Se presentaron errores al actualizar los precios";
+										mostrarMensaje(dto);
+									}
+								},
+								function(entryError) {
+									var dto ={};
+									dto.titulo="Error";
+									dto.mensaje="Se presentaron errores al eliminar el registro";
+									mostrarMensaje(dto);
+
+								});
 					
-					
+					}
 					$scope.valorTotalFactura=0;
 				$scope.sumarTotalFactura=function(){
 						$scope.valorTotalFactura=0;
@@ -187,6 +218,66 @@ app.controller(
 						});
 					}
 					
+					$scope.editarPre = function(producto) {
+						//abrimos el modal para realizar un abono
+						var numid=$scope.clienteSeleccionado.numId;
+						var informationAlert = $uibModal
+						.open({
+							animation : true,
+							templateUrl : "app/views/modals/productoIndividual.html",
+							controller : function($scope) {
+								$scope.acept = function() {
+									//abonar llamar el servicio
+									if($scope.valorActualizado == null || $scope.valorActualizado == ''){
+										var dto ={};
+										dto.titulo="Error";
+										dto.mensaje="Debe ingresar el valor para actualizar";
+										mostrarMensaje(dto);
+										return;
+									}
+									var fac={};
+									fac.valorActualizado=$scope.valorActualizado;
+									fac.idProducto=producto.idProducto;
+									fac.numId=numid;
+									
+									facturasSvc
+									.actualizarPrecioIndividual(fac)
+									.then(
+											function(res) {
+												if (res.data.responseResult.result) {
+													producto.valor=$scope.valorActualizado;
+													informationAlert.close();
+													var dto ={};
+													dto.titulo="Extio";
+													dto.mensaje="Registro actualizado exitosamente";
+													mostrarMensaje(dto);
+													$scope.buscarUsuarios();
+												} else {
+													informationAlert.close();
+													var dto ={};
+													dto.titulo="Extio";
+													dto.mensaje="Se presentaron errores al realizar la actualización";
+													mostrarMensaje(dto);
+												}
+											},
+											function(entryError) {
+												informationAlert.close();
+												var dto ={};
+												dto.titulo="Extio";
+												dto.mensaje="Se presentaron errores al realizar la actualización";
+												mostrarMensaje(dto);
+
+											});
+								}
+								$scope.cancel = function() {
+									informationAlert.close();
+									$scope.buscarUsuarios();
+								}
+							}
+						});
+					}
+					
+					
 					inicializar();
 
 					
@@ -201,6 +292,8 @@ app.controller(
 						$scope.productoVenta=null;
 						}
 					}
+					
+					
 					
 
 				

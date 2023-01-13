@@ -7,6 +7,8 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import co.urbaNatt.DTO.ActualizarPrecioIndividualDTO;
+import co.urbaNatt.DTO.ActualizarPreciosDTO;
 import co.urbaNatt.DTO.DetalleFacturaDTO;
 import co.urbaNatt.DTO.FacturaDTO;
 import co.urbaNatt.DTO.PreciosClienteDTO;
@@ -37,5 +39,7 @@ public interface IFacturasEJBLocal {
 	public List<ProductoDTO> consultarPrecios(String idCliente) throws TechnicalException, BusinessException;
 	public List<PreciosClienteDTO> consultarPreciosTabla(String idCliente, String nombre) throws TechnicalException, BusinessException;
 	public String eliminarPrecio(PreciosClienteDTO productoDTO) throws TechnicalException, BusinessException;
+	public String actualizarPrecios(ActualizarPreciosDTO actulizarDTO) throws TechnicalException, BusinessException;
+	public String actualizarPrecioIndividual(ActualizarPrecioIndividualDTO actulizarDTO) throws TechnicalException, BusinessException;
 	
 }

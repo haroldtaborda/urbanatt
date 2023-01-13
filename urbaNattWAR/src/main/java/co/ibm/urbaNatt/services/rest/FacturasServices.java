@@ -18,6 +18,8 @@ import javax.ws.rs.core.Response;
 
 import org.json.simple.JSONObject;
 
+import co.urbaNatt.DTO.ActualizarPrecioIndividualDTO;
+import co.urbaNatt.DTO.ActualizarPreciosDTO;
 import co.urbaNatt.DTO.DetalleFacturaDTO;
 import co.urbaNatt.DTO.FacturaDTO;
 import co.urbaNatt.DTO.PreciosClienteDTO;
@@ -223,6 +225,62 @@ public class FacturasServices {
 					.build();
 		}
 	}
+	
+	@SuppressWarnings("unchecked")
+	@POST
+	@Path("/actualizarPrecios")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response actualizarPrecios(ActualizarPreciosDTO actulizarDTO) {
+		JSONObject response = new JSONObject();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			String res = ejb.actualizarPrecios(actulizarDTO);
+			response.put("resultado", res);
+			response.put("responseResult", ResponseUtilities.getResponse(true, null));
+			return Response.status(200).entity(response).header("Access-Control-Allow-Origin", "*").build();
+		} catch (NamingException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (TechnicalException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (BusinessException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@POST
+	@Path("/actualizarPrecioIndividual")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response actualizarPrecioIndividual(ActualizarPrecioIndividualDTO actulizarDTO) {
+		JSONObject response = new JSONObject();
+		try {
+			IFacturasEJBLocal ejb = EJBBusinessLookup.getFacturasEJB();
+			String res = ejb.actualizarPrecioIndividual(actulizarDTO);
+			response.put("resultado", res);
+			response.put("responseResult", ResponseUtilities.getResponse(true, null));
+			return Response.status(200).entity(response).header("Access-Control-Allow-Origin", "*").build();
+		} catch (NamingException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (TechnicalException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		} catch (BusinessException e) {
+			response.put("responseResult", ResponseUtilities.getResponse(false, e));
+			return Response.status(200).entity(response.toJSONString()).header("Access-Control-Allow-Origin", "*")
+					.build();
+		}
+	}
+	
+	
 	@SuppressWarnings("unchecked")
 	@POST
 	@Path("/eliminarAbono")

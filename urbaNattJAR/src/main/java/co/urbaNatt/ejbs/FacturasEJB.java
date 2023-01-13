@@ -45,6 +45,8 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import co.urbaNatt.DAO.ProductosDAO;
+import co.urbaNatt.DTO.ActualizarPrecioIndividualDTO;
+import co.urbaNatt.DTO.ActualizarPreciosDTO;
 import co.urbaNatt.DTO.DetalleFacturaDTO;
 import co.urbaNatt.DTO.FacturaDTO;
 import co.urbaNatt.DTO.InsertsBDInDTO;
@@ -2850,6 +2852,114 @@ public class FacturasEJB implements IFacturasEJBLocal {
 		@Override
 		public String eliminarPrecio(PreciosClienteDTO productoDTO) throws TechnicalException, BusinessException {
 			return 	eliminarRegistrosPrecios(productoDTO.getIdClientePrecios());
+		}
+
+		@Override
+		public String actualizarPrecios(ActualizarPreciosDTO actulizarDTO)
+				throws TechnicalException, BusinessException {
+			Connection conexion = null;
+			try {
+				Integer resultado = null;
+				conexion = ConnectionUtils.getInstance().getConnectionBack();
+				List<Object> parametros = new ArrayList<Object>();
+				OperacionesBDInDTO ejecutarInDTO = null;
+				
+				
+				parametros.add(actulizarDTO.getPorcentaje());
+				parametros.add(actulizarDTO.getNumId());
+				
+				String consulta="";
+				if(actulizarDTO.getPorcentaje().compareTo(BigDecimal.ZERO) < 0 ) {
+					consulta="UPDATE PRECIOS_CLIENTE_DETALLES PD SET PD.VALOR=PD.VALOR-((PD.VALOR* ?)/100) WHERE pd.id_cliente_precios="
+							+ "(select ID_CLIENTE_PRECIOS from PRECIOS_CLIENTE PC WHERE PC.ID_CLIENTE= ?)";
+				}
+				else {
+					consulta="UPDATE PRECIOS_CLIENTE_DETALLES PD SET PD.VALOR=((PD.VALOR * ?)/100)+PD.VALOR WHERE pd.id_cliente_precios="
+							+ "(select ID_CLIENTE_PRECIOS from PRECIOS_CLIENTE PC WHERE PC.ID_CLIENTE= ?)";
+				}
+				
+				ejecutarInDTO = new OperacionesBDInDTO(consulta, conexion,
+						parametros);
+				resultado=operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+				
+				return "Exito";
+				
+			} catch (BusinessException e) {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+				if (e instanceof TechnicalException) {
+					throw (TechnicalException) e;
+				} else {
+					throw new TechnicalException(e);
+				}
+
+			} finally {
+				if (conexion != null) {
+					try {
+						conexion.close();
+					} catch (SQLException e) {
+						// Error al cerrar la conexion
+					}
+				}
+			}
+		}
+
+		@Override
+		public String actualizarPrecioIndividual(ActualizarPrecioIndividualDTO actulizarDTO)
+				throws TechnicalException, BusinessException {
+			Connection conexion = null;
+			try {
+				Integer resultado = null;
+				conexion = ConnectionUtils.getInstance().getConnectionBack();
+				List<Object> parametros = new ArrayList<Object>();
+				OperacionesBDInDTO ejecutarInDTO = null;
+				
+				parametros.add(actulizarDTO.getValorActualizado());
+				parametros.add(actulizarDTO.getIdProducto());
+				parametros.add(actulizarDTO.getNumId());
+				
+				
+				String consulta="UPDATE PRECIOS_CLIENTE_DETALLES PD SET PD.VALOR=? WHERE  pd.id_producto= ? and pd.id_cliente_precios= "
+						+ "(select ID_CLIENTE_PRECIOS from PRECIOS_CLIENTE PC WHERE PC.ID_CLIENTE=?)";
+				
+				ejecutarInDTO = new OperacionesBDInDTO(consulta, conexion,
+						parametros);
+				resultado=operacionesBD.ejecutarOperacionBD(ejecutarInDTO);
+				
+				return "Exito";
+				
+			} catch (BusinessException e) {
+				ResultSecurityDTO result = new ResultSecurityDTO();
+				result.error = new Error();
+				result.error.errorCode = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getCodigo();
+				result.error.errorDescription = EnumWebServicesErrors.ERROR_CREAR_USUARIO.getDescripcion();
+				result.result = false;
+				result.error.errorType = EnumServiceTypeError.BUSINESS.getTipoError();
+				throw new BusinessException(result);
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+				if (e instanceof TechnicalException) {
+					throw (TechnicalException) e;
+				} else {
+					throw new TechnicalException(e);
+				}
+
+			} finally {
+				if (conexion != null) {
+					try {
+						conexion.close();
+					} catch (SQLException e) {
+						// Error al cerrar la conexion
+					}
+				}
+			}
 		}
 
 

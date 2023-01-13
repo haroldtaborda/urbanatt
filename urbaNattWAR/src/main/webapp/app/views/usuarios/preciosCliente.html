@@ -137,6 +137,18 @@
 						</div>
 					</div>
 				</div>
+				
+				<div class="form-group col-xs-12 col-md-3">
+					<label>Actualizar todos</label>
+					<div class="input-group">
+						<input type="text" class="form-control" id="" placeholder="% subir o bajar"
+							ng-model="porcentajeActualizar"/>
+						<div class="input-group-addon">
+							<a ng-click="actualizarPorcentaje()"><img
+								style="width: 20px;" src="assets/img/icoModalExito.gif"></a>
+						</div>
+					</div>
+				</div>
 
 			</fieldset>
 		</div>
@@ -150,6 +162,8 @@
 						<div class="input-group-addon">
 							<a ng-click="seleccionarProducto(p)"><img
 								style="width: 20px;" src="assets/img/icoModalError.gif"></a>
+							<a ng-click="editarPre(p)"><img
+								style="width: 20px;" src="assets/img/icoEditar.png"></a>
 						</div>
 					</div>
 					

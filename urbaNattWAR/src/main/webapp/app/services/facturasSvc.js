@@ -127,6 +127,56 @@ app.factory('facturasSvc', function($http, $q, CONFIG, $window) {
             });
             return deferred.promise;
         },
+        actualizarPrecios: function(info) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: info,
+                url: CONFIG.endpoint + "/facturas/actualizarPrecios"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
+         actualizarPrecioIndividual: function(info) {
+    		var deferred = $q.defer();
+            var response = {};
+            $http({
+                method: 'POST',
+                data: info,
+                url: CONFIG.endpoint + "/facturas/actualizarPrecioIndividual"
+            }).success(function(data, status, headers, config, statusText) {
+                response.data = data;
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.resolve(response);
+            }).error(function(data, status, headers, config, statusText) {
+                var response = {};
+                response.data = data || "Request failed";
+                response.status = status;
+                response.headers = headers;
+                response.config = config;
+                response.statusText = statusText;
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        },
         generarReporte: function(usuario) {
     		var deferred = $q.defer();
             var response = {};
