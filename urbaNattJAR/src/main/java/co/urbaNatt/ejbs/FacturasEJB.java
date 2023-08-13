@@ -1547,6 +1547,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 					e.printStackTrace();
 				}
 			}
+			operacionesBD.cerrarStatement();
 			Date fechaActual = new Date();
 			String fe = operacionesBD.fechaStringhoraPorDateReporte(fechaActual);
 			String nombreReporte = ruta + "\\reporteCuentasCobrar" + fe + ".pdf";
@@ -1634,8 +1635,27 @@ public class FacturasEJB implements IFacturasEJBLocal {
 			BigDecimal sumaTotalGeneral = BigDecimal.ZERO;
 			BigDecimal sumaPagadoGeneral = BigDecimal.ZERO;
 			BigDecimal sumaDeudaGeneral = BigDecimal.ZERO;
-				
+			Object[] params = new Object[10];
+			List<Object[]> listaTemporal = new ArrayList<>();
 			while (rs.next()) {
+				 params = new Object[10];
+				 params[0] = "DATO";
+				 params[1] = rs.getLong(1);
+				 params[2] = rs.getString(2);
+				 params[3] = rs.getString(3);
+				 params[4] = rs.getLong(4) + "-" + rs.getLong(5);
+				 params[5] = rs.getString(6);
+				 params[6] = rs.getString(7);
+				listaTemporal.add(params);
+			}
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				 
+				e.printStackTrace();
+			}
+			operacionesBD.cerrarStatement();
+			for (Object[] objects : listaTemporal) {
 				paragraph = new Paragraph();
 				paragraph.add(new Phrase(Chunk.NEWLINE));
 				paragraph.add(new Phrase("Cliente"));
@@ -1665,21 +1685,21 @@ public class FacturasEJB implements IFacturasEJBLocal {
 
 				PdfPTable tableFacturas = new PdfPTable(anchocolumnas2);
 				PdfPTable tableAbonos = new PdfPTable(anchocolumnas3);
-				if (rs.getLong(1) == 2) {
+				if (Long.parseLong(objects[1].toString()) == 2) {
 					tipo = "Cédula ciudadania";
-				} else if (rs.getLong(1) == 4) {
+				} else if (Long.parseLong(objects[1].toString()) == 4) {
 					tipo = "NIT";
 				}
 
 				table.addCell(tipo);
-				table.addCell(rs.getString(2) + "");
-				table.addCell(rs.getString(3));
-				table.addCell(rs.getLong(4) + "-" + rs.getLong(5));
-				table.addCell(rs.getString(6));
-				table.addCell(rs.getString(7));
+				table.addCell(objects[2].toString());
+				table.addCell(objects[3].toString());
+				table.addCell(objects[4].toString());
+				table.addCell(objects[5].toString());
+				table.addCell(objects[6].toString());
 
 				document.add(table);
-				parametros.add(rs.getString(2));
+				parametros.add(objects[2].toString());
 				
 				if(hayVendedor) {
 					parametros.add(reporteDTO.getVendedor());
@@ -1750,7 +1770,7 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						e.printStackTrace();
 					}
 				}
-
+				operacionesBD.cerrarStatement();
 				PdfPCell celdaSum = new PdfPCell(new Paragraph("Valor total facutras cliente: " + formatoImporte.format(sumaTotal)));
 				celdaSum.setBackgroundColor(new BaseColor(211, 216, 205));
 				celdaSum.setColspan(8);
@@ -1822,9 +1842,10 @@ public class FacturasEJB implements IFacturasEJBLocal {
 						e.printStackTrace();
 					}
 				}
+				operacionesBD.cerrarStatement();
 			
 			}
-			
+		
 
 			paragraph = new Paragraph();
 			paragraph.add(new Phrase("Total de facturas: "+ contadorTotalFacturas));
@@ -1931,7 +1952,12 @@ public class FacturasEJB implements IFacturasEJBLocal {
 				a[9] = rs.getString(10);
 				lista.add(a);
 			}
-
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				 
+				e.printStackTrace();
+			}
 			Object[][] data = new Object[contador][];
 			for (int i = 0; i < lista.size(); i++) {
 				data[i] = new Object[10];
