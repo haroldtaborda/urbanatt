@@ -8,7 +8,7 @@ app.controller(
 					$scope.estados = [ 'Nueva', 'Pendiente', 'Pagada', 'Cancelada', 'Cerrada' , 'En abono' ];
 					$scope.reportes = [ 'Facturas', 'Productos', 'Cuentas por cobrar','Facturas por cliente', 'Total ventas' ];
 					$scope.tipos = [ 'Mes', 'Año' ];
-					$scope.vendedores=[ 'Alirio Urbano Martinez', 'Vendedor uno', 'Vendedor dos', 'Vendedor tres', 'Local' ];
+					$scope.vendedores=[ 'Alirio Urbano Martinez', 'Vendedor uno', 'Vendedor dos', 'Vendedor tres', 'Vendedor cuatro', 'Vendedor cinco', 'Vendedor seis', 'Vendedor siete', 'Vendedor ocho', 'Vendedor nueve', 'Vendedor diez', 'Local' ];
 					
 					$scope.meses = [ 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Nomviembre', 'Diciembre' ];
 					function Usuario() {

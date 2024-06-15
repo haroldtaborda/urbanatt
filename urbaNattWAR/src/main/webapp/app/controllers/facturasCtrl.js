@@ -7,7 +7,7 @@ app.controller(
 					$scope.currentPage = 0;
 					$scope.pages = [];
 					$scope.descuento=0;
-					$scope.vendedores=[ 'Alirio Urbano Martinez', 'Vendedor uno', 'Vendedor dos', 'Vendedor tres', 'Local' ];
+					$scope.vendedores=[ 'Alirio Urbano Martinez', 'Vendedor uno', 'Vendedor dos', 'Vendedor tres', 'Vendedor cuatro', 'Vendedor cinco', 'Vendedor seis', 'Vendedor siete', 'Vendedor ocho', 'Vendedor nueve', 'Vendedor diez','Local' ];
 					
 					$scope.mostrarEditar = false;
 					$scope.dias=0;
